@@ -1,24 +1,24 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { FaThumbsUp, FaThumbsDown, FaComment } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { AuthContext } from "./AuthContext";
 import useAxiosSecure from "./useAxiosSecure";
+import axios from "axios";
 
 export default function Banner({ selectedTag }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchedTerm, setSearchedTerm] = useState("");
     const [results, setResults] = useState([]);
-    const [noResult, setNoResult] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [expectedCount, setExpectedCount] = useState(3);
+    const [noResult, setNoResult] = useState(false);
 
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const axiosSecure = useAxiosSecure();
 
+    // Search mutation
     const searchMutation = useMutation({
         mutationFn: async (tag) => {
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/posts/search`, { tag });
@@ -28,21 +28,16 @@ export default function Banner({ selectedTag }) {
             setLoading(true);
             setResults([]);
             setNoResult(false);
-            setExpectedCount(3);
         },
         onSuccess: (data) => {
             setLoading(false);
-            if (data.length === 0) setTimeout(() => setNoResult(true), 100);
-            else {
-                setResults(data);
-                setExpectedCount(data.length);
-                setNoResult(false);
-            }
+            if (!data.length) setNoResult(true);
+            else setResults(data);
         },
         onError: () => {
-            setResults([]);
             setLoading(false);
-            setTimeout(() => setNoResult(true), 500);
+            setResults([]);
+            setNoResult(true);
         },
     });
 
@@ -63,10 +58,10 @@ export default function Banner({ selectedTag }) {
     };
 
     const handleClear = () => {
-        setResults([]);
-        setNoResult(false);
         setSearchTerm("");
         setSearchedTerm("");
+        setResults([]);
+        setNoResult(false);
     };
 
     const handleVote = async (postId, type) => {
@@ -74,11 +69,10 @@ export default function Banner({ selectedTag }) {
             Swal.fire({ icon: "warning", title: "Please login to vote" });
             return;
         }
+
         try {
-            const { data } = await axiosSecure.patch(`/posts/${postId}/vote`, {
-                type,
-                userEmail: user.email,
-            });
+            const { data } = await axiosSecure.post(`/posts/${postId}/vote`, { type });
+
             setResults((prev) =>
                 prev.map((p) =>
                     p._id === postId
@@ -93,53 +87,35 @@ export default function Banner({ selectedTag }) {
 
     const getSectionHeight = () => {
         if (loading) return "min-h-[350px] sm:min-h-[450px]";
-        if (results.length > 0) return "h-auto";
-        if (noResult) return "h-auto";
-        return "min-h-[50px] sm:min-h-[50px] md:max-h-[200px]";
+        if (results.length > 0 || noResult) return "h-auto";
+        return "min-h-[50px] sm:min-h-[50px]";
     };
 
     return (
-        <div
-            className={`w-full pt-20 pb-4 transition-all duration-500 ${getSectionHeight()}`}
-            style={{ backgroundColor: "rgb(245, 245, 245)" }} // light gray like bg-base-200
-        >
-
-
+        <div className={`w-full pt-20 pb-4 transition-all duration-500 ${getSectionHeight()}`} style={{ backgroundColor: "rgb(245, 245, 245)" }}>
             {/* Search Bar */}
-            <div className="max-w-4xl mx-auto text-center space-y-4 px-4 sm:px-6">
+            <div className="max-w-4xl mx-auto text-center px-4 sm:px-6">
                 <form onSubmit={handleSearch} className="flex flex-wrap justify-center mt-6 gap-2">
                     <input
                         type="text"
                         placeholder="Search by Tag"
-                        className="input input-primary w-full sm:w-64 md:w-1/2 bg-white text-gray-800 dark:bg-white dark:text-gray-800 border border-gray-300 placeholder-gray-400 focus:outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        className="input input-primary w-full sm:w-64 md:w-1/2 bg-white text-gray-800 border border-gray-300 placeholder-gray-400 focus:outline-none"
                     />
-
-                    <button type="submit" className="btn btn-primary flex-1 sm:flex-none">
-                        Search
-                    </button>
+                    <button type="submit" className="btn btn-primary flex-1 sm:flex-none">Search</button>
                     {(results.length > 0 || noResult) && (
-                        <button
-                            type="button"
-                            onClick={handleClear}
-                            className="btn btn-outline btn-error flex-1 sm:flex-none"
-                        >
-                            ✕ Clear
-                        </button>
+                        <button type="button" onClick={handleClear} className="btn btn-outline btn-error flex-1 sm:flex-none">✕ Clear</button>
                     )}
                 </form>
             </div>
 
-            {/* Search Results */}
+            {/* Posts Grid */}
             <div className="max-w-7xl mx-auto mt-10 px-4 sm:px-8">
                 {loading && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        {Array.from({ length: Math.min(expectedCount, 6) }).map((_, idx) => (
-                            <div
-                                key={idx}
-                                className="skeleton h-80 w-full rounded-lg bg-gray-200 animate-pulse"
-                            />
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                            <div key={idx} className="skeleton h-80 w-full rounded-lg bg-gray-200 animate-pulse" />
                         ))}
                     </div>
                 )}
@@ -147,40 +123,34 @@ export default function Banner({ selectedTag }) {
                 {!loading && results.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 pb-6">
                         {results.map((post) => {
-                            const userId = user?._id || user?.id;
+                            const userId = user?._id || user?.email;
                             const hasUpvoted = post.upvote_by?.includes(userId);
                             const hasDownvoted = post.downvote_by?.includes(userId);
 
                             return (
                                 <div
                                     key={post._id}
-                                    className="bg-white text-gray-500 rounded-lg shadow-md p-4 cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl flex flex-col justify-between h-full"
+                                    className="bg-white rounded-lg shadow-md p-4 cursor-pointer flex flex-col justify-between h-full hover:scale-[1.02] hover:shadow-xl transition-all"
                                     onClick={(e) => {
                                         if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
                                         navigate(`/posts/${post._id}`);
                                     }}
                                 >
-                                    {/* Author Info */}
+                                    {/* Author */}
                                     <div className="flex items-center mb-3">
-                                        <img
-                                            src={post.authorImage || "/default-avatar.png"}
-                                            alt={post.authorName || "Unknown"}
-                                            className="w-10 h-10 rounded-full mr-3 object-cover"
-                                        />
+                                        <img src={post.authorImage || "/default-avatar.png"} alt={post.authorName || "Unknown"} className="w-10 h-10 rounded-full mr-3 object-cover" />
                                         <div>
-                                            <p className="font-semibold truncate text-black">{post.authorName || "Unknown"}</p>
+                                            <p className="font-semibold text-black truncate">{post.authorName || "Unknown"}</p>
                                             <p className="text-gray-400 text-sm truncate">{new Date(post.creation_time).toLocaleString()}</p>
                                         </div>
                                     </div>
 
-                                    {/* Post Content */}
+                                    {/* Content */}
                                     <div className="mb-3 flex-grow">
                                         <h3 className="text-lg font-bold mb-2 truncate text-gray-500">{post.postTitle}</h3>
                                         <p className="line-clamp-3 text-gray-500">{post.postDescription}</p>
                                         {post.tag && (
-                                            <p className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm mt-2">
-                                                {post.tag}
-                                            </p>
+                                            <p className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm mt-2">{post.tag}</p>
                                         )}
                                     </div>
 
@@ -188,15 +158,15 @@ export default function Banner({ selectedTag }) {
                                     <div className="flex flex-wrap gap-3 mt-2">
                                         <button
                                             onClick={() => handleVote(post._id, "upvote")}
-                                            className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"} hover:text-green-600 cursor-pointer transition`}
+                                            className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"} hover:text-green-600 transition cursor-pointer`}
                                         >
-                                            <FaThumbsUp /> {post.upVote}
+                                            <FaThumbsUp /> {post.upVote || 0}
                                         </button>
                                         <button
                                             onClick={() => handleVote(post._id, "downvote")}
-                                            className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"} hover:text-red-600 cursor-pointer transition`}
+                                            className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"} hover:text-red-600 transition cursor-pointer`}
                                         >
-                                            <FaThumbsDown /> {post.downVote}
+                                            <FaThumbsDown /> {post.downVote || 0}
                                         </button>
                                         <button
                                             onClick={() => navigate(`/posts/${post._id}`)}

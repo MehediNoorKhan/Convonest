@@ -7,6 +7,7 @@ import axios from "axios";
 import AOS from "aos";
 import 'aos/dist/aos.css';
 import { AuthContext } from "./AuthContext";
+import useAxiosSecure from "./useAxiosSecure";
 import FailedToLoad from "./FailedToLoad";
 
 // Fetch posts from API
@@ -16,7 +17,14 @@ const fetchPosts = async ({ queryKey }) => {
         params: { sort: popularity ? "popularity" : undefined, page, limit: 8 },
     });
     return {
-        posts: res.data.posts || [],
+        posts: (res.data.posts || []).map((p) => ({
+            ...p,
+            upVote: p.upVote ?? 0,
+            downVote: p.downVote ?? 0,
+            comments: p.comments || [],
+            upvote_by: p.upvote_by || [],
+            downvote_by: p.downvote_by || [],
+        })),
         totalPages: res.data.totalPages || 1,
         currentPage: res.data.currentPage || 1,
     };
@@ -43,8 +51,10 @@ const PostSkeleton = () => (
 const AllPosts = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const axiosSecure = useAxiosSecure();
     const [activeTab, setActiveTab] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
+    const [posts, setPosts] = useState([]);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ["all-posts", { popularity: activeTab === 2, page: currentPage }],
@@ -53,30 +63,48 @@ const AllPosts = () => {
     });
 
     useEffect(() => {
+        if (data) setPosts(data.posts);
+    }, [data]);
+
+    useEffect(() => {
         AOS.init({ duration: 900, easing: "ease-in-out", once: true });
     }, []);
 
     if (isError) return <FailedToLoad />;
 
-    const handleVote = (postId, type) => {
+    const handleVote = async (postId, type) => {
         if (!user?.email) {
             Swal.fire({ icon: "warning", title: "Please login to vote" });
             return;
         }
-        // vote logic here
+        try {
+            const { data } = await axiosSecure.post(`/posts/${postId}/vote`, { type });
+            // Update posts state
+            setPosts((prev) =>
+                prev.map((p) =>
+                    p._id === postId
+                        ? {
+                            ...p,
+                            upVote: data.upVote,
+                            downVote: data.downVote,
+                            upvote_by: data.upvote_by,
+                            downvote_by: data.downvote_by,
+                        }
+                        : p
+                )
+            );
+        } catch {
+            Swal.fire({ icon: "error", title: "Vote failed, please try again" });
+        }
     };
 
     return (
         <div className="relative pt-8 pb-10 mt-12 max-w-7xl mx-auto overflow-hidden">
-
             {/* Animated Gradient Background */}
             <div className="absolute inset-0 bg-gradient-to-r from-purple-100 via-blue-100 to-pink-100 animate-gradientMove pointer-events-none -z-10"></div>
 
             {/* Header + Sorting */}
-            <div
-                className="relative flex justify-between items-center mb-6 px-6"
-                data-aos="fade-down"
-            >
+            <div className="relative flex justify-between items-center mb-6 px-6" data-aos="fade-down">
                 <h2 className="text-3xl font-bold text-primary">All Posts</h2>
                 <div className="flex gap-2" data-aos="fade-left">
                     <button
@@ -98,8 +126,8 @@ const AllPosts = () => {
             <div className="relative grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-6">
                 {isLoading
                     ? Array.from({ length: 10 }).map((_, idx) => <PostSkeleton key={idx} />)
-                    : data.posts.map((post, index) => {
-                        const userId = user?._id || user?.id;
+                    : posts.map((post, index) => {
+                        const userId = user?._id || user?.email;
                         const hasUpvoted = post.upvote_by?.includes(userId);
                         const hasDownvoted = post.downvote_by?.includes(userId);
 
@@ -113,6 +141,7 @@ const AllPosts = () => {
                                     navigate(`/posts/${post._id}`);
                                 }}
                             >
+                                {/* Author */}
                                 <div className="flex items-center mb-3">
                                     <img
                                         src={post.authorImage || "/default-avatar.png"}
@@ -121,17 +150,17 @@ const AllPosts = () => {
                                     />
                                     <div>
                                         <p className="font-semibold text-gray-900">{post.authorName || "Unknown"}</p>
-                                        <p className="text-gray-500 text-sm">
-                                            {new Date(post.creation_time).toLocaleString()}
-                                        </p>
+                                        <p className="text-gray-500 text-sm">{new Date(post.creation_time).toLocaleString()}</p>
                                     </div>
                                 </div>
 
+                                {/* Content */}
                                 <div className="mb-3">
                                     <h3 className="text-lg font-bold mb-2 text-gray-900">{post.postTitle}</h3>
                                     <p className="text-gray-600">{post.postDescription}</p>
                                 </div>
 
+                                {/* Action Buttons */}
                                 <div className="flex items-center gap-4 mt-2">
                                     <button
                                         onClick={() => handleVote(post._id, "upvote")}
@@ -159,10 +188,7 @@ const AllPosts = () => {
 
             {/* Pagination */}
             {!isLoading && (
-                <div
-                    className="relative flex justify-center items-center gap-2 mt-8 pb-6"
-                    data-aos="fade-up"
-                >
+                <div className="relative flex justify-center items-center gap-2 mt-8 pb-6" data-aos="fade-up">
                     <button
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}

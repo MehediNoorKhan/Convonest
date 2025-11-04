@@ -37,7 +37,6 @@ export default function PostComments() {
             setLoading(true);
             setError(null);
 
-            // Fetch comments first
             const commentsRes = await axiosSecure.get(`/posts/${id}/comments`, {
                 params: { page: pageNumber, limit },
             });
@@ -45,11 +44,9 @@ export default function PostComments() {
             setComments(commentsRes.data.comments || []);
             setTotalComments(commentsRes.data.totalComments || 0);
 
-            // Fetch post separately to get the title
             const postRes = await axiosSecure.get(`/posts/${id}`);
             setPost(postRes.data || { postTitle: "Post Title" });
 
-            // Set reported status for each comment (if user exists)
             if (user && commentsRes.data.comments) {
                 const reportStatuses = await Promise.all(
                     commentsRes.data.comments.map(async (comment) => {
@@ -61,7 +58,7 @@ export default function PostComments() {
                                 commentId: comment._id,
                                 hasReported: statusRes.data.hasReported,
                             };
-                        } catch (err) {
+                        } catch {
                             return { commentId: comment._id, hasReported: false };
                         }
                     })
@@ -109,7 +106,6 @@ export default function PostComments() {
                     delete updated[commentId];
                     return updated;
                 });
-
                 toast.success("Comment reported successfully!");
             }
         } catch (err) {
@@ -123,13 +119,13 @@ export default function PostComments() {
 
     if (!comments.length)
         return (
-            <div className="max-w-7xl mx-auto h-[70vh] flex flex-col justify-center items-center py-8 dark:bg-gray-800 rounded text-center">
-                <p className="text-red-500 text-4xl dark:text-gray-300 mb-4">No comments yet</p>
+            <div className="max-w-7xl mx-auto h-[70vh] flex flex-col justify-center items-center py-8 dark:bg-transparent rounded text-center">
+                <p className="text-red-500 text-4xl dark:text-red-600 mb-4">No comments yet</p>
             </div>
         );
 
     return (
-        <div className="max-w-6xl mx-auto mt-6 p-6 rounded bg-white">
+        <div className="max-w-6xl mx-auto mt-6 p-6 rounded bg-white text-gray-800">
             <h2 className="text-2xl font-bold mb-6 text-primary">{post?.postTitle || "Post Title"}</h2>
 
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white">
@@ -152,7 +148,9 @@ export default function PostComments() {
                                     key={c._id || index}
                                     className="bg-white border-b border-gray-200 hover:bg-[#E0FFFF] transition"
                                 >
-                                    <td className="px-6 py-4 font-medium text-gray-900">{c.commenterEmail}</td>
+                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                        {c.commenterEmail}
+                                    </td>
                                     <td className="px-6 py-4 text-gray-800">{c.comment}</td>
                                     <td className="px-6 py-4 text-center">
                                         <select
@@ -173,29 +171,18 @@ export default function PostComments() {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <button
-                                            className={`
-      btn 
-      ${isReported ? "btn-success" : "btn-error"} 
-      relative
-      ${isReported || !user || !selectedFeedback[c._id]
-                                                    ? "dark:!bg-gray-300 dark:!text-white !opacity-100 cursor-not-allowed group"
-                                                    : ""
-                                                }
-    `}
+                                            className={`btn ${isReported ? "btn-success" : "btn-error"} relative ${isReported || !user || !selectedFeedback[c._id]
+                                                ? "!bg-gray-300 !text-white !opacity-100 cursor-not-allowed group"
+                                                : ""
+                                                }`}
                                             disabled={isReported || !user || !selectedFeedback[c._id]}
                                         >
                                             {isReported ? "Reported" : "Report"}
-
-                                            {/* Red dot on hover if condition not fulfilled */}
                                             {(isReported || !user || !selectedFeedback[c._id]) && (
                                                 <span className="absolute top-1/2 right-2 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none -translate-y-1/2"></span>
                                             )}
                                         </button>
                                     </td>
-
-
-
-
                                 </tr>
                             );
                         })}
@@ -232,7 +219,6 @@ export default function PostComments() {
 
             <ToastContainer position="top-right" autoClose={2000} />
         </div>
-
 
     );
 }

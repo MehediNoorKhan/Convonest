@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { FaThumbsUp, FaThumbsDown, FaComment } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -7,12 +7,11 @@ import axios from "axios";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { AuthContext } from "./AuthContext";
+import useAxiosSecure from "./useAxiosSecure";
 import FailedToLoad from "./FailedToLoad";
 
 const fetchPosts = async () => {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
-        params: { page: 1, limit: 8 },
-    });
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, { params: { page: 1, limit: 8 } });
     return (res.data.posts || []).map((p) => ({
         ...p,
         upVote: p.upVote ?? 0,
@@ -48,11 +47,18 @@ const PostSkeleton = () => (
 const PostLists = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const axiosSecure = useAxiosSecure();
 
-    const { data: posts, isLoading, isError } = useQuery({
+    const { data: postsData, isLoading, isError } = useQuery({
         queryKey: ["posts-limited"],
         queryFn: fetchPosts,
     });
+
+    const [posts, setPosts] = useState([]);
+
+    useEffect(() => {
+        if (postsData) setPosts(postsData);
+    }, [postsData]);
 
     useEffect(() => {
         AOS.init({ duration: 800, easing: "ease-in-out", once: true });
@@ -61,12 +67,25 @@ const PostLists = () => {
     if (isError) return <FailedToLoad />;
     if (!posts?.length && !isLoading) return <p className="text-center mt-6">No posts found</p>;
 
-    const handleVote = (postId, type) => {
+    const handleVote = async (postId, type) => {
         if (!user?.email) {
             Swal.fire({ icon: "warning", title: "Please login to vote" });
             return;
         }
-        // vote logic
+
+        try {
+            const { data } = await axiosSecure.post(`/posts/${postId}/vote`, { type });
+
+            setPosts((prev) =>
+                prev.map((p) =>
+                    p._id === postId
+                        ? { ...p, upVote: data.upVote, downVote: data.downVote, upvote_by: data.upvote_by, downvote_by: data.downvote_by }
+                        : p
+                )
+            );
+        } catch {
+            Swal.fire({ icon: "error", title: "Vote failed, please try again" });
+        }
     };
 
     return (
@@ -79,7 +98,7 @@ const PostLists = () => {
                 {isLoading
                     ? Array.from({ length: 8 }).map((_, idx) => <PostSkeleton key={idx} />)
                     : posts.map((post, idx) => {
-                        const userId = user?._id || user?.id;
+                        const userId = user?._id || user?.email;
                         const hasUpvoted = post.upvote_by?.includes(userId);
                         const hasDownvoted = post.downvote_by?.includes(userId);
 
@@ -93,41 +112,41 @@ const PostLists = () => {
                                     navigate(`/posts/${post._id}`);
                                 }}
                             >
+                                {/* Author */}
                                 <div className="flex items-center mb-3">
-                                    <img
-                                        src={post.authorImage || "/default-avatar.png"}
-                                        alt={post.authorName || "Unknown"}
-                                        className="w-10 h-10 rounded-full mr-3 object-cover"
-                                    />
+                                    <img src={post.authorImage || "/default-avatar.png"} alt={post.authorName || "Unknown"} className="w-10 h-10 rounded-full mr-3 object-cover" />
                                     <div>
-                                        <p className="font-semibold text-black">{post.authorName || "Unknown"}</p>
-                                        <p className="text-gray-400 text-sm">
-                                            {new Date(post.creation_time).toLocaleString()}
-                                        </p>
+                                        <p className="font-semibold text-black truncate">{post.authorName || "Unknown"}</p>
+                                        <p className="text-gray-400 text-sm truncate">{new Date(post.creation_time).toLocaleString()}</p>
                                     </div>
                                 </div>
 
-                                <div className="mb-3">
-                                    <h3 className="text-lg font-bold mb-2 text-gray-700">{post.postTitle || ""}</h3>
-                                    <p className="text-gray-600">{post.postDescription || ""}</p>
+                                {/* Content */}
+                                <div className="mb-3 flex-grow">
+                                    <h3 className="text-lg font-bold mb-2 truncate text-gray-500">{post.postTitle}</h3>
+                                    <p className="line-clamp-3 text-gray-500">{post.postDescription}</p>
+                                    {post.tag && (
+                                        <p className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm mt-2">{post.tag}</p>
+                                    )}
                                 </div>
 
-                                <div className="flex items-center gap-4 mt-2">
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-3 mt-2">
                                     <button
                                         onClick={() => handleVote(post._id, "upvote")}
-                                        className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"} hover:text-green-600 cursor-pointer transition`}
+                                        className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"} hover:text-green-600 transition cursor-pointer`}
                                     >
-                                        <FaThumbsUp /> {post.upVote}
+                                        <FaThumbsUp /> {post.upVote || 0}
                                     </button>
                                     <button
                                         onClick={() => handleVote(post._id, "downvote")}
-                                        className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"} hover:text-red-600 cursor-pointer transition`}
+                                        className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"} hover:text-red-600 transition cursor-pointer`}
                                     >
-                                        <FaThumbsDown /> {post.downVote}
+                                        <FaThumbsDown /> {post.downVote || 0}
                                     </button>
                                     <button
                                         onClick={() => navigate(`/posts/${post._id}`)}
-                                        className="comment-btn flex items-center gap-1 text-gray-600 hover:text-blue-600 cursor-pointer transition"
+                                        className="comment-btn flex items-center gap-1 text-gray-500 hover:text-blue-600 cursor-pointer transition"
                                     >
                                         <FaComment /> {post.comments?.length || 0}
                                     </button>
