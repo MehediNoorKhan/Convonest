@@ -17,7 +17,6 @@ export default function AddAnnouncement() {
 
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
-
     const authorImage = watch("authorImage");
 
     const addAnnouncementMutation = useMutation({
@@ -63,18 +62,19 @@ export default function AddAnnouncement() {
             if (data.success) {
                 setValue("authorImage", data.data.url);
                 setImageUploaded(true);
+
             } else {
                 throw new Error("Image upload failed");
             }
         } catch (err) {
-            console.error(err);
-            toast.error("Image upload failed!", { autoClose: 1500 });
+            console.error("Image upload error:", err);
+
         } finally {
             setUploading(false);
         }
     };
 
-    const onSubmit = async (formData) => {
+    const onSubmit = (formData) => {
         if (!user?.email) {
             toast.warning("Please login to add an announcement!", { autoClose: 2000 });
             return;
@@ -99,9 +99,7 @@ export default function AddAnnouncement() {
     }
 
     return (
-        <div
-            className="max-w-4xl w-full mx-auto mt-6 mb-8 p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl bg-white dark:bg-blue-50 transition-colors duration-500"
-        >
+        <div className="max-w-4xl w-full mx-auto mt-6 mb-8 p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl bg-white dark:bg-white transition-colors duration-500">
             <ToastContainer position="top-right" autoClose={2000} />
 
             <h2 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center text-primary">
@@ -117,10 +115,12 @@ export default function AddAnnouncement() {
                     <input
                         type="text"
                         {...register("authorName", { required: true })}
-                        placeholder="Enter author name"
-                        className="input input-bordered w-full text-gray-500 placeholder-gray-400 bg-white dark:bg-white dark:text-gray-500 dark:placeholder-gray-400"
+                        value={user.displayName}  // Pre-filled from Firebase user
+                        readOnly                  // Make it readonly
+                        className="input input-bordered w-full text-black bg-white placeholder-gray-400 border-2 border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
+
 
                 {/* Author Image */}
                 <div>
@@ -131,10 +131,9 @@ export default function AddAnnouncement() {
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
-                        className="file-input file-input-bordered w-full bg-white text-gray-500 placeholder-gray-400 dark:text-gray-500 dark:placeholder-gray-400"
+                        className="file-input file-input-bordered w-full text-black bg-white placeholder-gray-400 border-2 border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
-
 
                 <input type="hidden" {...register("authorImage", { required: true })} />
 
@@ -147,7 +146,7 @@ export default function AddAnnouncement() {
                         type="text"
                         {...register("title", { required: true })}
                         placeholder="Enter announcement title"
-                        className="input input-bordered w-full text-gray-500 placeholder-gray-400 bg-white dark:bg-white dark:text-gray-500 dark:placeholder-gray-400"
+                        className="input input-bordered w-full text-black bg-white placeholder-gray-400 border-2 border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
 
@@ -160,7 +159,7 @@ export default function AddAnnouncement() {
                         {...register("description", { required: true })}
                         placeholder="Write the announcement details here..."
                         rows={5}
-                        className="textarea textarea-bordered w-full text-gray-500 placeholder-gray-400 bg-white dark:bg-white dark:text-gray-500 dark:placeholder-gray-400"
+                        className="textarea textarea-bordered w-full text-black bg-white placeholder-gray-400 border-2 border-blue-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-500"
                     />
                 </div>
 
@@ -169,9 +168,9 @@ export default function AddAnnouncement() {
                     <button
                         type="submit"
                         disabled={uploading || !imageUploaded || addAnnouncementMutation.isLoading}
-                        className={`w-full sm:w-1/2 md:w-1/3 py-2 px-4 rounded font-semibold text-white transition-all duration-300 ${addAnnouncementMutation.isLoading || uploading
+                        className={`w-full sm:w-1/2 md:w-1/3 py-2 px-4 rounded font-semibold text-white transition-all duration-300 ${uploading || !imageUploaded || addAnnouncementMutation.isLoading
                             ? "bg-blue-600 opacity-80 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700"
+                            : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                             }`}
                     >
                         {addAnnouncementMutation.isLoading
@@ -183,6 +182,5 @@ export default function AddAnnouncement() {
                 </div>
             </form>
         </div>
-
     );
 }

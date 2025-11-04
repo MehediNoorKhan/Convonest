@@ -13,7 +13,7 @@ import FailedToLoad from "./FailedToLoad";
 const fetchPosts = async ({ queryKey }) => {
     const [_key, { popularity, page }] = queryKey;
     const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
-        params: { sort: popularity ? "popularity" : undefined, page, limit: 10 },
+        params: { sort: popularity ? "popularity" : undefined, page, limit: 8 },
     });
     return {
         posts: res.data.posts || [],

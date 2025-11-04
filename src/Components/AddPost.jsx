@@ -21,6 +21,7 @@ const AddPost = () => {
     const [imageUploaded, setImageUploaded] = useState(false);
     const [actualUserData, setActualUserData] = useState(null);
     const [loadingUserData, setLoadingUserData] = useState(true);
+    const [postLimitReached, setPostLimitReached] = useState(false); // New state
 
     const { register, handleSubmit, control, reset, setValue, watch } = useForm();
     const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
@@ -54,6 +55,13 @@ const AddPost = () => {
         };
         fetchUserData();
     }, [user, axiosSecure]);
+
+    // Check if user has more than 4 posts
+    useEffect(() => {
+        if (actualUserData && actualUserData.posts >= 5) {
+            setPostLimitReached(true);
+        }
+    }, [actualUserData]);
 
     // Image upload
     const handleImageUpload = async (e) => {
@@ -125,9 +133,8 @@ const AddPost = () => {
 
     if (!user || loadingTags || loadingUserData) return <AddPostSkeleton />;
 
-    // Check post limit for non-members
-    const hitLimit = actualUserData?.membership === "no" && actualUserData?.posts >= 5;
-    if (hitLimit) {
+    // If post limit reached, show message instead of form
+    if (postLimitReached) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center space-y-4">
@@ -135,7 +142,7 @@ const AddPost = () => {
                         You have hit your limit of adding posts!
                     </h2>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <p className="text-gray-700 text-xl">To add more post</p>
+                        <p className="text-gray-700 text-xl">To add more posts</p>
                         <button
                             className="btn btn-outline btn-primary"
                             onClick={() => {
@@ -143,7 +150,7 @@ const AddPost = () => {
                                 navigate("/membership");
                             }}
                         >
-                            Be a Member
+                            Become a Member
                         </button>
                     </div>
                 </div>
@@ -247,4 +254,3 @@ const AddPost = () => {
 };
 
 export default AddPost;
-

@@ -67,7 +67,7 @@ export default function DashboardLayout() {
         { name: "My Posts", path: "/dashboard/myposts", icon: <FaBullhorn />, roles: ["user"] },
         { name: "Admin Profile", path: "/dashboard/adminprofile", icon: <FaUser />, roles: ["admin"] },
         { name: "Manage Users", path: "/dashboard/manageusers", icon: <FaUsers />, roles: ["admin"] },
-        { name: "Announcements", path: "/dashboard/addannouncement", icon: <FaBullhorn />, roles: ["admin"] },
+        { name: "Add Announcement", path: "/dashboard/addannouncement", icon: <FaBullhorn />, roles: ["admin"] },
         { name: "Reported Comments", path: "/dashboard/reportedcomments", icon: <FaFlag />, roles: ["admin"] },
     ].filter(link => role && link.roles.includes(role));
 
