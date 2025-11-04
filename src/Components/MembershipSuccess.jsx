@@ -1,9 +1,16 @@
 import { Link } from "react-router";
+import Lottie from "lottie-react";
+import subscribeAnimation from "../../public/subscribe.json"; // ✅ Import animation
 
 export default function MembershipSuccess() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
             <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center max-w-md w-full">
+                {/* ✅ Success Animation */}
+                <div className="w-64 mx-auto mb-4">
+                    <Lottie animationData={subscribeAnimation} loop={false} />
+                </div>
+
                 <h2 className="text-3xl font-bold text-green-600 mb-4">
                     🎉 Payment Successful!
                 </h2>

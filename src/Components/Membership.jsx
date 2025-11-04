@@ -6,6 +6,7 @@ import { useAuth } from "../Components/AuthContext";
 import useAxiosSecure from "../Components/useAxiosSecure";
 import MembershipSkeleton from "../skeletons/MembershipSkeleton";
 import { useNavigate } from "react-router";
+import Lottie from "lottie-react";
 
 // ✅ Stripe Public Key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -15,20 +16,29 @@ export default function Membership({ skeleton }) {
     const axiosSecure = useAxiosSecure();
     const navigate = useNavigate();
 
-    const [userStatus, setUserStatus] = useState(null); // Bronze, Gold
-    const [userRole, setUserRole] = useState(null); // user, admin
+    const [userStatus, setUserStatus] = useState(null);
+    const [userRole, setUserRole] = useState(null);
     const [fetchingStatus, setFetchingStatus] = useState(true);
+    const [membershipAnimation, setMembershipAnimation] = useState(null);
+
+    // ✅ Load Lottie JSON from public folder
+    useEffect(() => {
+        fetch("/membership.json")
+            .then((res) => res.json())
+            .then((data) => setMembershipAnimation(data))
+            .catch((err) => console.error("Failed to load membership animation:", err));
+    }, []);
 
     useEffect(() => {
         if (user?.email) {
             setFetchingStatus(true);
             axiosSecure
                 .get(`/users/role/${user.email}`)
-                .then(res => {
+                .then((res) => {
                     setUserStatus(res.data.user_status || "Bronze");
                     setUserRole(res.data.role || "user");
                 })
-                .catch(err => {
+                .catch((err) => {
                     console.error("Failed to fetch user status:", err);
                     setUserStatus("Bronze");
                     setUserRole("user");
@@ -43,17 +53,16 @@ export default function Membership({ skeleton }) {
 
     if (loading || fetchingStatus) return skeleton;
 
-    // ✅ No user logged in: show modal immediately
     if (!user) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-xl p-6 max-w-sm text-center shadow-lg">
-                    <h3 className="text-xl font-bold text-primary mb-4">
+                    <h3 className="text-xl font-bold text-blue-600 mb-4">
                         You must log in to be a member
                     </h3>
                     <button
                         onClick={() => navigate("/login")}
-                        className="px-6 py-2 rounded-lg bg-white border border-gray-300 text-gray-800 shadow hover:scale-105 transition"
+                        className="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
                     >
                         Login
                     </button>
@@ -62,37 +71,34 @@ export default function Membership({ skeleton }) {
         );
     }
 
-    // ✅ If admin
     if (userRole === "admin") {
         return (
             <div className="py-24 flex items-center justify-center min-h-screen bg-gray-100">
-                <p className="text-3xl font-semibold text-primary text-center px-4">
-                    You’re an Admin. You don’t need to take membership.
+                <p className="text-3xl font-semibold text-blue-700 text-center px-4">
+                    You’re an Admin. You don’t need membership.
                 </p>
             </div>
         );
     }
 
-    // ✅ If already Gold member
     if (userStatus === "Gold") {
         return (
             <div className="py-24 flex items-center justify-center min-h-screen bg-gray-100">
-                <p className="text-3xl font-semibold text-primary text-center px-4">
-                    You are already a member of our service.
+                <p className="text-3xl font-semibold text-blue-700 text-center px-4">
+                    You are already a Gold member. 🎉
                 </p>
             </div>
         );
     }
 
-    // ✅ Show membership purchase option
     return (
-        <div className="py-24 px-4 sm:px-6 md:px-10 min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="max-w-xl w-full px-6 sm:px-8 md:px-10 py-8 sm:py-10 rounded-2xl bg-white shadow-lg text-center">
-                <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-blue-700">
+        <div className="py-24 px-6 min-h-screen bg-gray-100 flex flex-col md:flex-row items-center justify-center gap-8">
+            {/* Left: Membership Form */}
+            <div className="max-w-md w-full p-8 rounded-2xl bg-white shadow-lg text-center">
+                <h2 className="text-3xl font-bold mb-4 text-blue-700">
                     Upgrade to Gold Membership
                 </h2>
-
-                <p className="mb-6 text-blue-500 text-sm sm:text-base">
+                <p className="mb-6 text-blue-500">
                     Get exclusive access by upgrading to{" "}
                     <span className="font-semibold text-blue-600">Gold</span> for only{" "}
                     <span className="text-purple-600">$10</span>.
@@ -102,6 +108,17 @@ export default function Membership({ skeleton }) {
                     <CheckoutForm />
                 </Elements>
             </div>
+
+            {/* Right: Animation */}
+            {membershipAnimation && (
+                <div className="w-full max-w-md flex justify-center">
+                    <Lottie
+                        animationData={membershipAnimation}
+                        loop={true}
+                        className="w-full h-[400px] md:h-[450px]"
+                    />
+                </div>
+            )}
         </div>
     );
 }

@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import AOS from "aos";
+import "aos/dist/aos.css";
 import FailedToLoad from "./FailedToLoad";
 
 export default function AllAnnouncements() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    useEffect(() => {
+        AOS.init({ duration: 800, easing: "ease-in-out", once: true });
+    }, []);
 
     const fetchAllAnnouncements = async () => {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/announcements`);
@@ -30,7 +36,7 @@ export default function AllAnnouncements() {
 
     return (
         <div className="max-w-7xl mx-auto mb-6 pb-4 mt-4">
-            <h2 className="text-3xl font-bold text-primary mb-8 pt-20 pl-4">
+            <h2 className="text-3xl font-bold text-primary mb-8 pt-20 pl-4" data-aos="fade-up">
                 All Announcements
             </h2>
 
@@ -39,10 +45,11 @@ export default function AllAnnouncements() {
                 {isLoading
                     ? Array.from({ length: 8 }).map((_, i) => <AnnouncementSkeleton key={i} />)
                     : currentAnnouncements.length > 0 ? (
-                        currentAnnouncements.map((a) => (
+                        currentAnnouncements.map((a, index) => (
                             <div
                                 key={a._id}
-                                className="bg-white text-gray-700 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition"
+                                data-aos={index % 2 === 0 ? "fade-up" : "fade-down"}
+                                className="bg-white text-gray-700 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition cursor-pointer"
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <img
@@ -51,9 +58,7 @@ export default function AllAnnouncements() {
                                         className="w-10 h-10 rounded-full"
                                     />
                                     <div>
-                                        <p className="font-semibold text-black">
-                                            {a.authorName}
-                                        </p>
+                                        <p className="font-semibold text-black">{a.authorName}</p>
                                         <p className="text-gray-500 text-sm">
                                             {new Date(a.creation_time).toLocaleString()}
                                         </p>

@@ -126,7 +126,7 @@ const Register = () => {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
-                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
+                        className="input input-bordered w-full bg-white text-black placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="email"
@@ -134,7 +134,7 @@ const Register = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
+                        className="input input-bordered w-full bg-white text-black placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="password"
@@ -142,14 +142,14 @@ const Register = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
+                        className="input input-bordered w-full bg-white text-black placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
                         required
-                        className="file-input file-input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
+                        className="file-input file-input-bordered w-full bg-white text-black placeholder-gray-400 transition-colors duration-500"
                     />
 
                     <button

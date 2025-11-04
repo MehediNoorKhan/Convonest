@@ -1,9 +1,11 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { FaThumbsUp, FaThumbsDown, FaComment } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import AOS from "aos";
+import "aos/dist/aos.css";
 import { AuthContext } from "./AuthContext";
 import FailedToLoad from "./FailedToLoad";
 
@@ -23,7 +25,6 @@ const fetchPosts = async () => {
 
 const PostSkeleton = () => (
     <div className="bg-white rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
-        {/* Top section: author info */}
         <div className="flex items-center mb-3">
             <div className="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
             <div className="flex-1">
@@ -31,15 +32,11 @@ const PostSkeleton = () => (
                 <div className="w-16 h-2 bg-gray-200 rounded"></div>
             </div>
         </div>
-
-        {/* Title & Description */}
         <div className="mb-3 flex-1">
             <div className="w-3/4 h-4 bg-gray-300 rounded mb-2"></div>
             <div className="w-full h-3 bg-gray-200 rounded mb-1"></div>
             <div className="w-5/6 h-3 bg-gray-200 rounded"></div>
         </div>
-
-        {/* Bottom icons */}
         <div className="flex items-center gap-4 mt-2">
             <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
             <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
@@ -57,6 +54,10 @@ const PostLists = () => {
         queryFn: fetchPosts,
     });
 
+    useEffect(() => {
+        AOS.init({ duration: 800, easing: "ease-in-out", once: true });
+    }, []);
+
     if (isError) return <FailedToLoad />;
     if (!posts?.length && !isLoading) return <p className="text-center mt-6">No posts found</p>;
 
@@ -70,12 +71,14 @@ const PostLists = () => {
 
     return (
         <div className="pt-8 pb-4 max-w-7xl mx-auto">
-            <h3 className="text-3xl font-bold text-primary mb-6 px-6">Posts</h3>
+            <h3 className="text-3xl font-bold text-primary mb-6 px-6" data-aos="fade-up">
+                Posts
+            </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-6">
                 {isLoading
                     ? Array.from({ length: 8 }).map((_, idx) => <PostSkeleton key={idx} />)
-                    : posts.map((post) => {
+                    : posts.map((post, idx) => {
                         const userId = user?._id || user?.id;
                         const hasUpvoted = post.upvote_by?.includes(userId);
                         const hasDownvoted = post.downvote_by?.includes(userId);
@@ -83,13 +86,13 @@ const PostLists = () => {
                         return (
                             <div
                                 key={post._id}
+                                data-aos={idx % 2 === 0 ? "fade-up" : "fade-up"}
                                 className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
                                 onClick={(e) => {
                                     if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
                                     navigate(`/posts/${post._id}`);
                                 }}
                             >
-                                {/* Author Info */}
                                 <div className="flex items-center mb-3">
                                     <img
                                         src={post.authorImage || "/default-avatar.png"}
@@ -104,13 +107,11 @@ const PostLists = () => {
                                     </div>
                                 </div>
 
-                                {/* Post Content */}
                                 <div className="mb-3">
                                     <h3 className="text-lg font-bold mb-2 text-gray-700">{post.postTitle || ""}</h3>
                                     <p className="text-gray-600">{post.postDescription || ""}</p>
                                 </div>
 
-                                {/* Action Buttons */}
                                 <div className="flex items-center gap-4 mt-2">
                                     <button
                                         onClick={() => handleVote(post._id, "upvote")}
@@ -136,12 +137,12 @@ const PostLists = () => {
                     })}
             </div>
 
-            {/* See All Posts button */}
             {!isLoading && posts?.length > 0 && (
                 <div className="flex justify-center mt-6">
                     <button
                         onClick={() => navigate("/all-posts")}
                         className="btn btn-primary px-6 py-2 rounded-lg hover:scale-105 transition"
+                        data-aos="fade-up"
                     >
                         See All Posts
                     </button>
