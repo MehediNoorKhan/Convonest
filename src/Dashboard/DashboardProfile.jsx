@@ -169,12 +169,10 @@ export default function DashboardProfile() {
                         transition={{ duration: 0.5 }}
                     >
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-3">
-                            {/* Text content */}
                             <p className="text-gray-700 whitespace-pre-wrap w-full sm:w-[90%]">
                                 {aboutMeEdit ? "" : profile.aboutMe || "No About Me yet."}
                             </p>
 
-                            {/* Edit button */}
                             {!aboutMeEdit && (
                                 <button
                                     onClick={() => setAboutMeEdit(true)}
@@ -190,17 +188,17 @@ export default function DashboardProfile() {
                                 <input
                                     type="text"
                                     placeholder="Write something about yourself"
-                                    className="input input-primary w-full"
+                                    className="input input-bordered w-full bg-white text-gray-700 placeholder-gray-400 border-gray-300"
                                     value={aboutMeText}
                                     onChange={(e) => setAboutMeText(e.target.value)}
                                 />
                                 <div className="flex flex-col sm:flex-row gap-3 mt-2">
-                                    <button type="submit" className="btn btn-soft btn-primary w-full sm:w-auto">
+                                    <button type="submit" className="btn btn-primary w-full sm:w-auto">
                                         Save
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-soft btn-secondary w-full sm:w-auto"
+                                        className="btn btn-secondary w-full sm:w-auto"
                                         onClick={() => {
                                             setAboutMeEdit(false);
                                             setAboutMeText(profile.aboutMe || "");
@@ -227,7 +225,7 @@ export default function DashboardProfile() {
                             return (
                                 <motion.div
                                     key={post._id || idx}
-                                    className="bg-base-200 cursor-pointer p-4 sm:p-5 rounded-lg shadow-md hover:shadow-lg transition flex flex-col justify-between"
+                                    className="bg-gray-100 cursor-pointer p-4 sm:p-5 rounded-lg shadow-md hover:shadow-lg transition flex flex-col justify-between"
                                     initial={{ opacity: 0, y: 30 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true, amount: 0.3 }}
@@ -284,5 +282,6 @@ export default function DashboardProfile() {
                 </div>
             </motion.div>
         </div>
+
     );
 }

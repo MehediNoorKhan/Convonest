@@ -19,9 +19,9 @@ const fetchPosts = async ({ queryKey }) => {
     };
 };
 
-// Skeleton Card (dark mode friendly)
+// Skeleton Card
 const PostSkeleton = () => (
-    <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
+    <div className="bg-white rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
         <div className="flex items-center mb-3">
             <div className="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
             <div className="flex-1">
@@ -104,7 +104,7 @@ const AllPosts = () => {
                         return (
                             <div
                                 key={post._id}
-                                className="bg-white dark:bg-white text-gray-500 dark:text-gray-500 rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
+                                className="bg-white text-gray-500 rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
                                 onClick={(e) => {
                                     if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
                                     navigate(`/posts/${post._id}`);
@@ -168,22 +168,25 @@ const AllPosts = () => {
                     <button
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="btn btn-soft btn-primary disabled:opacity-50"
+                        className="px-4 py-2 hover:cursor-pointer rounded-lg border border-gray-300 bg-white text-gray-800 shadow disabled:opacity-50 transition"
                     >
                         Prev
                     </button>
-                    <span className="px-4">
+
+                    <span className="px-4 text-gray-800">
                         Page {currentPage} of {data.totalPages}
                     </span>
+
                     <button
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, data.totalPages))}
                         disabled={currentPage === data.totalPages}
-                        className="btn btn-soft btn-primary disabled:opacity-50"
+                        className="px-4 py-2 hover:cursor-pointer rounded-lg border border-gray-300 bg-white text-gray-800 shadow disabled:opacity-50 transition"
                     >
                         Next
                     </button>
                 </div>
             )}
+
         </div>
     );
 };

@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router";
 import AddPostSkeleton from "../skeletons/AddPostSkeleton";
 
+// ... imports remain the same
+
 const AddPost = () => {
     const { user } = useContext(AuthContext);
     const axiosSecure = useAxiosSecure();
@@ -162,7 +164,7 @@ const AddPost = () => {
                         type="text"
                         value={user.displayName}
                         disabled
-                        className="input input-primary w-full"
+                        className="input input-primary w-full bg-white text-gray-900 placeholder-gray-500"
                     />
                 </div>
 
@@ -173,7 +175,7 @@ const AddPost = () => {
                         type="email"
                         value={user.email}
                         disabled
-                        className="input input-primary w-full"
+                        className="input input-primary w-full bg-white text-gray-900 placeholder-gray-500"
                     />
                 </div>
 
@@ -184,7 +186,7 @@ const AddPost = () => {
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
-                        className="input input-primary w-full"
+                        className="input input-primary w-full bg-white text-gray-900 placeholder-gray-500"
                     />
                 </div>
                 <input type="hidden" {...register("authorImage", { required: true })} />
@@ -196,7 +198,7 @@ const AddPost = () => {
                         type="text"
                         {...register("postTitle", { required: true })}
                         placeholder="Enter Post Title"
-                        className="input input-primary w-full"
+                        className="input input-primary w-full bg-white text-gray-900 placeholder-gray-500"
                     />
                 </div>
 
@@ -206,7 +208,7 @@ const AddPost = () => {
                     <textarea
                         {...register("postDescription", { required: true })}
                         placeholder="Enter Post Description"
-                        className="textarea textarea-primary w-full"
+                        className="textarea textarea-primary w-full bg-white text-gray-900 placeholder-gray-500"
                         rows={4}
                     />
                 </div>
@@ -216,7 +218,7 @@ const AddPost = () => {
                     <label className="text-[#00CCFF] mb-1">Select Tag</label>
                     <select
                         defaultValue="Pick a language"
-                        className="select select-primary w-full"
+                        className="select select-primary w-full bg-white text-gray-900 placeholder-gray-500"
                         {...register("tag", { required: true })}
                     >
                         <option disabled>Pick a Tag</option>
@@ -229,11 +231,15 @@ const AddPost = () => {
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    className="btn btn-primary w-full"
                     disabled={!imageUploaded || uploading}
+                    className={`w-full text-white font-semibold py-2 px-4 rounded transition-all ${!imageUploaded || uploading
+                        ? 'bg-blue-600 cursor-not-allowed opacity-80' // visible even when disabled
+                        : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                 >
                     {uploading ? "Image Uploading..." : "Add Post"}
                 </button>
+
             </form>
             <ToastContainer position="top-right" autoClose={2000} />
         </div>
@@ -241,3 +247,4 @@ const AddPost = () => {
 };
 
 export default AddPost;
+

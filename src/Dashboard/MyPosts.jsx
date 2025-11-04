@@ -59,7 +59,6 @@ export default function MyPosts() {
                 await axiosSecure.delete(`/posts/${postId}`);
                 setPosts(posts.filter((post) => post._id !== postId));
 
-                // 🔹 Toast after successful delete
                 MySwal.fire({
                     icon: "success",
                     title: "Post deleted successfully!",
@@ -88,8 +87,8 @@ export default function MyPosts() {
     if (!posts.length)
         return (
             <div className="max-w-7xl mx-auto">
-                <div className="h-[70vh] flex flex-col justify-center items-center py-8 dark:bg-gray-800 rounded text-center">
-                    <p className="text-red-500 text-4xl dark:text-gray-300 mb-4">You haven't posted anything yet</p>
+                <div className="h-[70vh] flex flex-col justify-center items-center py-8 bg-white rounded text-center">
+                    <p className="text-red-500 text-4xl mb-4">You haven't posted anything yet</p>
                     <button
                         className="btn btn-outline btn-primary mt-2"
                         onClick={() => (window.location.href = "/dashboard/addpost")}
@@ -107,12 +106,12 @@ export default function MyPosts() {
     const totalPages = Math.ceil(posts.length / postsPerPage);
 
     return (
-        <div className="max-w-6xl mx-auto mt-6 p-6 rounded dark:bg-gray-900">
-            <h2 className="text-2xl font-bold mb-6 text-primary dark:text-white">My Posts</h2>
+        <div className="max-w-6xl mx-auto mt-6 p-6 rounded bg-white">
+            <h2 className="text-2xl font-bold mb-6 text-primary">My Posts</h2>
 
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <table className="w-full text-sm text-left text-gray-700 bg-white rounded-lg">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th className="px-6 py-3">Title</th>
                             <th className="px-6 py-3 text-center">Votes</th>
@@ -128,12 +127,12 @@ export default function MyPosts() {
                             return (
                                 <tr
                                     key={post._id || index}
-                                    className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900 transition"
+                                    className="bg-white border-b border-gray-200 hover:bg-purple-50 transition"
                                 >
-                                    <th className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                    <th className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                         {safeTitle}
                                     </th>
-                                    <td className="px-6 py-4 text-center font-medium text-gray-900 dark:text-gray-200">{votes}</td>
+                                    <td className="px-6 py-4 text-center font-medium text-gray-900">{votes}</td>
                                     <td className="px-6 py-4 text-center">
                                         <button
                                             className="btn btn-outline btn-primary"
@@ -165,7 +164,7 @@ export default function MyPosts() {
                     <li>
                         <a
                             href="#"
-                            className="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            className="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700"
                             onClick={(e) => {
                                 e.preventDefault();
                                 if (currentPage > 1) setCurrentPage(currentPage - 1);
@@ -179,8 +178,8 @@ export default function MyPosts() {
                             <a
                                 href="#"
                                 aria-current={page === currentPage ? "page" : undefined}
-                                className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${page === currentPage
-                                    ? "text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white"
+                                className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700 ${page === currentPage
+                                    ? "text-blue-600 bg-blue-50"
                                     : ""
                                     }`}
                                 onClick={(e) => {
@@ -195,7 +194,7 @@ export default function MyPosts() {
                     <li>
                         <a
                             href="#"
-                            className="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            className="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700"
                             onClick={(e) => {
                                 e.preventDefault();
                                 if (currentPage < totalPages) setCurrentPage(currentPage + 1);

@@ -13,6 +13,10 @@ export default function ManageUsers() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const rowsPerPage = 10; // max rows per page
+
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -85,6 +89,11 @@ export default function ManageUsers() {
     if (!users.length)
         return <p className="text-center mt-6 text-gray-500">No users found.</p>;
 
+    // Pagination logic
+    const totalPages = Math.ceil(users.length / rowsPerPage);
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const currentUsers = users.slice(startIndex, startIndex + rowsPerPage);
+
     return (
         <div className="relative overflow-x-auto sm:rounded-lg max-w-7xl mx-auto mt-6 p-2 sm:p-4 md:p-6">
             <h3 className="text-2xl sm:text-3xl font-bold text-primary mb-4 text-start">
@@ -92,8 +101,8 @@ export default function ManageUsers() {
             </h3>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm sm:text-base text-left text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs sm:text-sm text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <table className="w-full text-sm sm:text-base text-left text-gray-500">
+                    <thead className="text-xs sm:text-sm text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th className="px-4 py-2 sm:px-6 sm:py-3">Name</th>
                             <th className="px-4 py-2 sm:px-6 sm:py-3">Email</th>
@@ -103,42 +112,34 @@ export default function ManageUsers() {
                         </tr>
                     </thead>
                     <tbody className="space-y-2 sm:space-y-3">
-                        {users.map((user, index) => (
+                        {currentUsers.map((user, index) => (
                             <tr
                                 key={user._id}
-                                className="bg-white dark:bg-gray-800 shadow-md rounded-lg transform transition-all duration-300 hover:bg-[#E0FFFF] hover:shadow-xl opacity-0 animate-fadeIn"
-                                style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
+                                className="bg-white shadow-md rounded-lg transform transition-all duration-300 hover:bg-[#E0FFFF] hover:shadow-xl opacity-0 animate-fadeIn"
+                                style={{
+                                    animationDelay: `${index * 100}ms`,
+                                    animationFillMode: "forwards",
+                                }}
                             >
-                                {/* Name */}
                                 <td className="px-4 py-2 sm:px-6 sm:py-3 flex items-center gap-3">
                                     <img
                                         src={user.avatar}
                                         alt={user.fullName}
                                         className="w-10 h-10 rounded-full object-cover"
                                     />
-                                    <span className="font-medium text-gray-800 dark:text-gray-200">
-                                        {user.fullName}
-                                    </span>
+                                    <span className="font-medium text-gray-800">{user.fullName}</span>
                                 </td>
-
-                                {/* Email */}
                                 <td className="px-4 py-2 sm:px-6 sm:py-3">{user.email}</td>
-
-                                {/* Role */}
                                 <td className="px-4 py-2 sm:px-6 sm:py-3 text-center">
                                     <span
                                         className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium text-center ${user.role === "admin"
                                             ? "bg-green-100 text-green-700"
-                                            :
-                                            "bg-yellow-100 text-yellow-600"
-
+                                            : "bg-yellow-100 text-yellow-600"
                                             }`}
                                     >
                                         {user.role}
                                     </span>
                                 </td>
-
-                                {/* Make Admin */}
                                 <td className="px-4 py-2 sm:px-6 sm:py-3 text-center">
                                     {user.role === "admin" ? (
                                         <span className="text-green-600 font-semibold text-sm sm:text-base">
@@ -153,8 +154,6 @@ export default function ManageUsers() {
                                         </button>
                                     )}
                                 </td>
-
-                                {/* Subscription */}
                                 <td className="px-4 py-2 sm:px-6 sm:py-3 text-center">
                                     {user.membership === "yes" ? (
                                         <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-600 text-center">
@@ -175,6 +174,38 @@ export default function ManageUsers() {
                     </tbody>
                 </table>
             </div>
+
+          
+            {/* Pagination controls */}
+            <div className="flex justify-center items-center mt-4 space-x-2">
+                <button
+                    className="btn btn-sm btn-outline dark:border-gray-400 dark:text-gray-400"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                >
+                    Prev
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                    <button
+                        key={i}
+                        className={`btn btn-sm ${currentPage === i + 1
+                                ? "btn-primary"
+                                : "btn-outline dark:border-gray-400 dark:text-gray-400"
+                            }`}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+                <button
+                    className="btn btn-sm btn-outline dark:border-gray-400 dark:text-gray-400"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </button>
+            </div>
+
 
             <style>{`
                 @keyframes fadeIn {

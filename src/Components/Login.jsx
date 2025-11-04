@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router";
 import { AuthContext } from "./AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axiosSecure from "./axiosSecure"; // secure axios instance
-import SocialLogin from "./SocialLogin"; // ✅ your SocialLogin component
+import axiosSecure from "./axiosSecure";
+import SocialLogin from "./SocialLogin";
 
 const Login = () => {
     const { login } = useContext(AuthContext);
@@ -49,19 +49,24 @@ const Login = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-base-200">
+        <div
+            className="flex items-center justify-center min-h-screen px-4 sm:px-6 transition-all duration-500"
+            style={{ backgroundColor: "rgb(245, 245, 245)" }} // light gray like bg-base-200
+        >
             <ToastContainer position="top-right" autoClose={2000} />
-            <div className="w-full max-w-md p-8 space-y-6 bg-base-100 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800">Login</h2>
+            <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-blue-200 rounded-lg shadow-md transition-colors duration-500">
+                <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-800">
+                    Login
+                </h2>
 
                 <form className="space-y-4" onSubmit={handleLogin}>
                     {/* Email Input */}
                     <div>
-                        <label className="block mb-1 text-gray-600">Email</label>
+                        <label className="block mb-1 text-gray-600 dark:text-gray-700">Email</label>
                         <input
                             type="email"
                             placeholder="Enter email"
-                            className="input input-primary w-full"
+                            className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -70,11 +75,11 @@ const Login = () => {
 
                     {/* Password Input */}
                     <div>
-                        <label className="block mb-1 text-gray-600">Password</label>
+                        <label className="block mb-1 text-gray-600 dark:text-gray-700">Password</label>
                         <input
                             type="password"
                             placeholder="Enter password"
-                            className="input input-primary w-full"
+                            className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -84,14 +89,18 @@ const Login = () => {
                     {/* Login Button */}
                     <button
                         type="submit"
-                        className="btn btn-primary w-full"
                         disabled={loading}
+                        className={`w-full text-white font-semibold py-2 px-4 rounded transition-all
+              ${loading
+                                ? "bg-blue-600 opacity-80 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700"
+                            }`}
                     >
                         {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 
-                {/* ✅ Social login with Google */}
+                {/* Social login */}
                 <SocialLogin />
 
                 <p className="text-sm text-center text-gray-500 mt-4">

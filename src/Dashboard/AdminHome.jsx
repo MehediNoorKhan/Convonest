@@ -32,7 +32,6 @@ export default function AdminHome() {
                 });
             } catch (err) {
                 console.error(err);
-                // 🔹 SweetAlert2 toast on error
             } finally {
                 setLoading(false);
             }
@@ -119,12 +118,18 @@ export default function AdminHome() {
                 ))}
             </div>
 
-            {/* Pie Chart */}
+            {/* Pie Chart - White BG in Both Modes */}
             <div
-                className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 opacity-0 animate-fadeIn"
-                style={{ animationDelay: "500ms", animationFillMode: "forwards", height: "400px" }}
+                className="max-w-3xl mx-auto rounded-lg shadow-md p-4 sm:p-6 opacity-0 animate-fadeIn"
+                style={{
+                    animationDelay: "500ms",
+                    animationFillMode: "forwards",
+                    height: "400px",
+                    backgroundColor: "white",
+                    color: "#374151",
+                }}
             >
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-2 text-center">
                     Site Stats Overview
                 </h3>
                 <Pie data={pieData} options={pieOptions} />
@@ -132,14 +137,14 @@ export default function AdminHome() {
 
             {/* Animations */}
             <style>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease forwards;
-        }
-      `}</style>
+                @keyframes fadeIn {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fadeIn {
+                    animation: fadeIn 0.6s ease forwards;
+                }
+            `}</style>
         </div>
     );
 }

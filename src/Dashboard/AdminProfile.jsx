@@ -96,8 +96,9 @@ export default function AdminProfile() {
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
                         placeholder="Add a frequently used word"
-                        className="input input-primary w-full"
+                        className="input input-bordered w-full bg-white text-gray-700 placeholder-gray-400 border-gray-300"
                     />
+
                     <button type="submit" className="btn btn-primary">
                         Add Tag
                     </button>
@@ -106,18 +107,19 @@ export default function AdminProfile() {
 
             {/* Animations */}
             <style>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.5s ease forwards; }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn { animation: fadeIn 0.5s ease forwards; }
 
-        @keyframes slideUp {
-          0% { opacity: 0; transform: translateY(40px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slideUp { animation: slideUp 0.6s ease forwards; }
-      `}</style>
+    @keyframes slideUp {
+      0% { opacity: 0; transform: translateY(40px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slideUp { animation: slideUp 0.6s ease forwards; }
+  `}</style>
         </div>
+
     );
 }

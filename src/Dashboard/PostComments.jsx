@@ -129,12 +129,12 @@ export default function PostComments() {
         );
 
     return (
-        <div className="max-w-6xl mx-auto mt-6 p-6 rounded dark:bg-gray-900">
-            <h2 className="text-2xl font-bold mb-6 text-primary dark:text-white">{post?.postTitle || "Post Title"}</h2>
+        <div className="max-w-6xl mx-auto mt-6 p-6 rounded bg-white">
+            <h2 className="text-2xl font-bold mb-6 text-primary">{post?.postTitle || "Post Title"}</h2>
 
-            <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white">
+                <table className="w-full text-sm text-left rounded-lg bg-white">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
                             <th className="px-6 py-3">Commenter</th>
                             <th className="px-6 py-3">Comment</th>
@@ -146,45 +146,56 @@ export default function PostComments() {
                         {comments.map((c, index) => {
                             const isReported = reportedComments.has(c._id);
                             const selectedFeedbackForComment = selectedFeedback[c._id] || "";
-                            const canReport = selectedFeedbackForComment && !isReported && user;
 
                             return (
                                 <tr
                                     key={c._id || index}
-                                    className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900 transition"
+                                    className="bg-white border-b border-gray-200 hover:bg-[#E0FFFF] transition"
                                 >
-                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                                        {c.commenterEmail}
-                                    </td>
-                                    <td className="px-6 py-4">{c.comment}</td>
+                                    <td className="px-6 py-4 font-medium text-gray-900">{c.commenterEmail}</td>
+                                    <td className="px-6 py-4 text-gray-800">{c.comment}</td>
                                     <td className="px-6 py-4 text-center">
                                         <select
                                             value={selectedFeedbackForComment}
                                             onChange={(e) => handleFeedbackChange(c._id, e.target.value)}
                                             disabled={isReported || !user}
-                                            className="select select-primary w-full"
+                                            className="select select-primary w-full bg-white text-gray-800 border-gray-300"
                                         >
                                             <option value="" disabled>
                                                 Select feedback
                                             </option>
-                                            {feedbackOptions
-                                                .filter((opt) => opt.value)
-                                                .map((opt) => (
-                                                    <option key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </option>
-                                                ))}
+                                            {feedbackOptions.filter(opt => opt.value).map(opt => (
+                                                <option key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </option>
+                                            ))}
                                         </select>
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <button
-                                            className={`btn ${isReported ? "btn-success cursor-not-allowed" : "btn-error"}`}
+                                            className={`
+      btn 
+      ${isReported ? "btn-success" : "btn-error"} 
+      relative
+      ${isReported || !user || !selectedFeedback[c._id]
+                                                    ? "dark:!bg-gray-300 dark:!text-white !opacity-100 cursor-not-allowed group"
+                                                    : ""
+                                                }
+    `}
                                             disabled={isReported || !user || !selectedFeedback[c._id]}
-                                            onClick={() => handleReport(c._id)}
                                         >
                                             {isReported ? "Reported" : "Report"}
+
+                                            {/* Red dot on hover if condition not fulfilled */}
+                                            {(isReported || !user || !selectedFeedback[c._id]) && (
+                                                <span className="absolute top-1/2 right-2 w-2 h-2 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none -translate-y-1/2"></span>
+                                            )}
                                         </button>
                                     </td>
+
+
+
+
                                 </tr>
                             );
                         })}
@@ -193,55 +204,35 @@ export default function PostComments() {
             </div>
 
             {/* Pagination */}
-            <nav className="flex justify-center mt-6" aria-label="Page navigation">
-                <ul className="inline-flex -space-x-px text-sm">
-                    <li>
-                        <a
-                            href="#"
-                            className="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage > 1) setCurrentPage(currentPage - 1);
-                            }}
-                        >
-                            Previous
-                        </a>
-                    </li>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <li key={page}>
-                            <a
-                                href="#"
-                                aria-current={page === currentPage ? "page" : undefined}
-                                className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${page === currentPage
-                                    ? "text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white"
-                                    : ""
-                                    }`}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setCurrentPage(page);
-                                }}
-                            >
-                                {page}
-                            </a>
-                        </li>
-                    ))}
-                    <li>
-                        <a
-                            href="#"
-                            className="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                            }}
-                        >
-                            Next
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+            <div className="flex justify-center items-center mt-4 space-x-2 bg-white">
+                <button
+                    className="btn btn-sm btn-outline border-gray-300 text-gray-700"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                >
+                    Prev
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                    <button
+                        key={i}
+                        className={`btn btn-sm ${currentPage === i + 1 ? "btn-primary" : "btn-outline border-gray-300 text-gray-700"}`}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+                <button
+                    className="btn btn-sm btn-outline border-gray-300 text-gray-700"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </button>
+            </div>
 
-            {/* Toast container */}
             <ToastContainer position="top-right" autoClose={2000} />
         </div>
+
+
     );
 }

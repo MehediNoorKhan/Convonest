@@ -13,13 +13,15 @@ export default function ReportedComments() {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const rowsPerPage = 10;
 
-    const fetchReports = async (page = 1, limit = 10, status = "pending") => {
+    const fetchReports = async (page = 1) => {
         setLoading(true);
         setError(null);
         try {
             const res = await axiosSecure.get("/reportsforadmin", {
-                params: { page, limit, status },
+                params: { page, limit: rowsPerPage, status: "pending" },
             });
 
             if (res.data.success) {
@@ -43,8 +45,6 @@ export default function ReportedComments() {
                     })
                 );
                 setReports(dataWithSafeComments);
-
-                // 🔹 Toast on successful fetch
             } else {
                 setError("Failed to fetch reports");
             }
@@ -56,8 +56,8 @@ export default function ReportedComments() {
     };
 
     useEffect(() => {
-        fetchReports();
-    }, []);
+        fetchReports(currentPage);
+    }, [currentPage]);
 
     const handleDelete = async (report) => {
         const result = await MySwal.fire({
@@ -77,7 +77,6 @@ export default function ReportedComments() {
             await axiosSecure.delete(`/reports/${report._id}`);
             setReports((prev) => prev.filter((r) => r._id !== report._id));
 
-            // 🔹 Toast on delete success
             MySwal.fire({
                 icon: "success",
                 title: "Deleted successfully!",
@@ -99,10 +98,11 @@ export default function ReportedComments() {
     };
 
     if (loading) return <ReportedCommentsSkeleton />;
-
     if (error) return <FailedToLoad message={error} />;
     if (!reports.length)
         return <p className="text-center mt-6 text-gray-500">No reported comments found.</p>;
+
+    const totalPages = Math.ceil(reports.length / rowsPerPage);
 
     return (
         <div className="relative overflow-x-auto sm:rounded-lg max-w-7xl mx-auto mt-6 p-2 sm:p-4 md:p-6">
@@ -110,8 +110,8 @@ export default function ReportedComments() {
                 Reported Comments
             </h3>
             <div className="overflow-x-auto">
-                <table className="w-full text-sm sm:text-base text-left text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs sm:text-sm text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <table className="w-full text-sm sm:text-base text-left text-gray-500 dark:text-gray-500">
+                    <thead className="text-xs sm:text-sm text-gray-700 uppercase bg-gray-50 dark:bg-gray-50 dark:text-gray-700">
                         <tr>
                             <th className="px-4 py-2 sm:px-6 sm:py-3">Comment</th>
                             <th className="px-4 py-2 sm:px-6 sm:py-3">Commenter</th>
@@ -121,70 +121,100 @@ export default function ReportedComments() {
                         </tr>
                     </thead>
                     <tbody className="space-y-2 sm:space-y-3">
-                        {reports.map((report, index) => (
-                            <tr
-                                key={report._id}
-                                className="bg-white dark:bg-gray-800 shadow-md rounded-lg transform transition-all duration-300 hover:bg-[#E0FFFF] hover:shadow-xl opacity-0 animate-fadeIn"
-                                style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
-                            >
-                                <td className="px-4 py-2 sm:px-6 sm:py-3">{report.comment || "Deleted"}</td>
-                                <td className="px-4 py-2 sm:px-6 sm:py-3">{report.commenterName || "Unknown"}</td>
-                                <td className="px-4 py-2 sm:px-6 sm:py-3">
-                                    <span className="px-2 py-1 rounded-lg bg-blue-100 text-blue-800 font-medium text-xs sm:text-sm">
-                                        {report.reporterEmail || "Unknown"}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-2 sm:px-6 sm:py-3">
-                                    <div className="inline-flex items-center gap-2">
-                                        {report.status === "pending" && (
-                                            <div className="status status-warning animate-ping"></div>
-                                        )}
-                                        {report.status === "resolved" && (
-                                            <div className="status status-success animate-bounce"></div>
-                                        )}
-                                        <span className="capitalize text-xs sm:text-sm">{report.status}</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-2 sm:px-6 sm:py-3">
-                                    <button
-                                        onClick={() => handleDelete(report)}
-                                        className="btn btn-error inline-flex items-center gap-2 text-white text-xs sm:text-sm"
-                                    >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            strokeWidth={2}
-                                            stroke="currentColor"
-                                            className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                        {reports
+                            .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+                            .map((report, index) => (
+                                <tr
+                                    key={report._id}
+                                    className="bg-white dark:bg-white shadow-md rounded-lg transform transition-all duration-300 hover:bg-[#E0FFFF] hover:shadow-xl opacity-0 animate-fadeIn"
+                                    style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
+                                >
+                                    <td className="px-4 py-2 sm:px-6 sm:py-3">{report.comment || "Deleted"}</td>
+                                    <td className="px-4 py-2 sm:px-6 sm:py-3">{report.commenterName || "Unknown"}</td>
+                                    <td className="px-4 py-2 sm:px-6 sm:py-3">
+                                        <span className="px-2 py-1 rounded-lg bg-blue-100 text-blue-800 font-medium text-xs sm:text-sm">
+                                            {report.reporterEmail || "Unknown"}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-2 sm:px-6 sm:py-3">
+                                        <div className="inline-flex items-center gap-2">
+                                            {report.status === "pending" && <div className="status status-warning animate-ping"></div>}
+                                            {report.status === "resolved" && <div className="status status-success animate-bounce"></div>}
+                                            <span className="capitalize text-xs sm:text-sm">{report.status}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-2 sm:px-6 sm:py-3">
+                                        <button
+                                            onClick={() => handleDelete(report)}
+                                            className="btn btn-error inline-flex items-center gap-2 text-white text-xs sm:text-sm"
                                         >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                strokeWidth={2}
+                                                stroke="currentColor"
+                                                className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
                     </tbody>
                 </table>
             </div>
 
-            <style>{`
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.5s ease forwards; }
+            {/* Pagination */}
+            {/* Pagination */}
+            <div className="flex justify-center items-center mt-4 space-x-2">
+                <button
+                    className="btn btn-sm btn-outline dark:border-gray-400 dark:text-gray-400"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                >
+                    Prev
+                </button>
+                {[...Array(totalPages)].map((_, i) => (
+                    <button
+                        key={i}
+                        className={`btn btn-sm ${currentPage === i + 1
+                                ? "btn-primary"
+                                : "btn-outline dark:border-gray-400 dark:text-gray-400"
+                            }`}
+                        onClick={() => setCurrentPage(i + 1)}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+                <button
+                    className="btn btn-sm btn-outline dark:border-gray-400 dark:text-gray-400"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                >
+                    Next
+                </button>
+            </div>
 
-        .status {
-          width: 10px;
-          height: 10px;
-          border-radius: 9999px;
-        }
-        .status-success { background-color: #34d399; }
-        .status-warning { background-color: #facc15; }
-        .status-error { background-color: #f87171; }
-      `}</style>
+
+            <style>{`
+                @keyframes fadeIn {
+                    0% { opacity: 0; transform: translateY(20px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fadeIn { animation: fadeIn 0.5s ease forwards; }
+
+                .status {
+                  width: 10px;
+                  height: 10px;
+                  border-radius: 9999px;
+                }
+                .status-success { background-color: #34d399; }
+                .status-warning { background-color: #facc15; }
+                .status-error { background-color: #f87171; }
+            `}</style>
         </div>
     );
 }

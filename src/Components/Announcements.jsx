@@ -20,7 +20,7 @@ export default function Announcements() {
 
     // Skeleton loader
     const AnnouncementSkeleton = () => (
-        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4 animate-pulse h-[220px]" />
+        <div className="bg-white rounded-lg shadow-md p-4 animate-pulse h-[220px]" />
     );
 
     if (isError) return <FailedToLoad />;
@@ -40,7 +40,7 @@ export default function Announcements() {
                     : announcements.slice(0, 6).map((a) => (
                         <div
                             key={a._id}
-                            className="bg-white dark:bg-white rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition cursor-pointer"
+                            className="bg-white rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition cursor-pointer"
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <img

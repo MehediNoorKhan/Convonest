@@ -5,10 +5,10 @@ import Footer from './Footer';
 
 const RootLayout = () => {
     return (
-        <div className='bg-base-200'>
-            <Header></Header>
-            <Outlet></Outlet>
-            <Footer></Footer>
+        <div className="bg-[#f1f1f1] dark:bg-[#f1f1f1]"> {/* same in both modes */}
+            <Header />
+            <Outlet />
+            <Footer />
         </div>
     );
 };

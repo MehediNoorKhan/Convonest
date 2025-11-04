@@ -14,7 +14,6 @@ export default function PostDetails() {
   const queryClient = useQueryClient();
   const [newComment, setNewComment] = useState("");
 
-
   // Fetch post
   const { data: post, isLoading, isError } = useQuery({
     queryKey: ["post", id],
@@ -48,30 +47,30 @@ export default function PostDetails() {
         let downVote = old.downVote ?? 0;
         let upvote_by = old.upvote_by ?? [];
         let downvote_by = old.downvote_by ?? [];
-        const userEmail = user.email?.toLowerCase();
+        const userEmail = user?.email?.toLowerCase();
 
         if (type === "upvote") {
           if (upvote_by.includes(userEmail)) {
-            upVote -= 1;
-            upvote_by = upvote_by.filter((email) => email !== userEmail);
+            upVote--;
+            upvote_by = upvote_by.filter((e) => e !== userEmail);
           } else {
-            upVote += 1;
-            upvote_by = [...upvote_by, userEmail];
+            upVote++;
+            upvote_by.push(userEmail);
             if (downvote_by.includes(userEmail)) {
-              downVote -= 1;
-              downvote_by = downvote_by.filter((email) => email !== userEmail);
+              downVote--;
+              downvote_by = downvote_by.filter((e) => e !== userEmail);
             }
           }
         } else if (type === "downvote") {
           if (downvote_by.includes(userEmail)) {
-            downVote -= 1;
-            downvote_by = downvote_by.filter((email) => email !== userEmail);
+            downVote--;
+            downvote_by = downvote_by.filter((e) => e !== userEmail);
           } else {
-            downVote += 1;
-            downvote_by = [...downvote_by, userEmail];
+            downVote++;
+            downvote_by.push(userEmail);
             if (upvote_by.includes(userEmail)) {
-              upVote -= 1;
-              upvote_by = upvote_by.filter((email) => email !== userEmail);
+              upVote--;
+              upvote_by = upvote_by.filter((e) => e !== userEmail);
             }
           }
         }
@@ -152,7 +151,13 @@ export default function PostDetails() {
     );
   }
 
-  if (isError || !post) return <p className="text-center mt-6">Post not found</p>;
+  if (isError || !post) {
+    return (
+      <div className="text-center mt-6 text-gray-700 dark:text-gray-200">
+        <p>Post not found or an error occurred.</p>
+      </div>
+    );
+  }
 
   const userEmail = user?.email?.toLowerCase();
   const hasUpvoted = post.upvote_by?.includes(userEmail);
@@ -160,7 +165,7 @@ export default function PostDetails() {
 
   return (
     <div className="py-8">
-      <div className="max-w-3xl mx-auto px-4 pt-2 pb-8 mt-16 bg-white rounded-xl shadow-md space-y-6">
+      <div className="max-w-3xl mx-auto px-4 pt-4 pb-8 mt-16 bg-white rounded-xl shadow-md space-y-6">
         <ToastContainer position="top-right" autoClose={2000} />
 
         {/* Author Info */}
@@ -171,15 +176,15 @@ export default function PostDetails() {
             className="w-12 h-12 rounded-full object-cover"
           />
           <div>
-            <p className="font-semibold">{post.authorName || "Unknown"}</p>
+            <p className="font-semibold text-gray-900 dark:text-gray-700">{post.authorName || "Unknown"}</p>
             <p className="text-gray-500 text-sm">{new Date(post.creation_time).toLocaleString()}</p>
           </div>
         </div>
 
-        {/* Post Content */}
 
+        {/* Post Content */}
         <div>
-          <h2 className="text-2xl font-bold mb-2 pl-1">{post.postTitle}</h2>
+          <h2 className="text-2xl font-bold mb-2 pl-1 text-gray-900">{post.postTitle}</h2>
           <p className="text-gray-700 pl-1">{post.postDescription}</p>
           <p className="inline-block px-3 py-1 mt-2 bg-purple-100 text-purple-700 rounded-full text-sm">
             {post.tag}
@@ -213,19 +218,19 @@ export default function PostDetails() {
 
         {/* Comment Section */}
         <div className="mt-6">
-          <h3 className="text-xl font-semibold mb-3">Comments ({post.comments?.length ?? 0})</h3>
+          <h3 className="text-xl font-semibold mb-3 text-gray-900">Comments ({post.comments?.length ?? 0})</h3>
 
           <div className="mb-4">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write your comment"
-              className="textarea textarea-primary w-full"
+              className="textarea w-full border border-gray-300 rounded-md p-2 text-gray-900 bg-white"
               rows={3}
-            ></textarea>
+            />
             <button
               onClick={handleComment}
-              className="btn btn-soft btn-primary mt-2"
+              className="mt-2 px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
               disabled={commentMutation.isLoading}
             >
               {commentMutation.isLoading ? "Posting..." : "Comment"}
@@ -243,7 +248,7 @@ export default function PostDetails() {
                       className="w-8 h-8 rounded-full object-cover"
                     />
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{c.commenterName || "Anonymous"}</p>
+                      <p className="font-semibold text-sm dark:text-black">{c.commenterName || "Anonymous"}</p>
                       <p className="text-gray-500 text-xs">{new Date(c.createdAt).toLocaleString()}</p>
                     </div>
                   </div>

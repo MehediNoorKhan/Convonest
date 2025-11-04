@@ -3,7 +3,7 @@ import React from "react";
 const FAQ = () => {
     return (
         <div className="max-w-3xl mx-auto py-20 px-4">
-            <h2 className="text-3xl font-bold text-center text-primary dark:text-white mb-10">
+            <h2 className="text-3xl font-bold text-center text-primary mb-10">
                 Frequently Asked Questions
             </h2>
 
@@ -12,16 +12,16 @@ const FAQ = () => {
                     <div
                         key={index}
                         className="collapse collapse-arrow 
-                                   bg-white dark:bg-gray-800 
-                                   border border-blue-300 dark:border-blue-700 
+                                   bg-white 
+                                   border border-blue-300 
                                    rounded-xl transition-all duration-300
                                    hover:shadow-[0_4px_15px_0_rgba(59,130,246,0.4)]"
                     >
                         <input type="radio" name="faq-accordion" defaultChecked={index === 0} />
-                        <div className="collapse-title font-semibold text-base text-gray-800 dark:text-gray-100">
+                        <div className="collapse-title font-semibold text-base text-gray-800">
                             {item.question}
                         </div>
-                        <div className="collapse-content text-sm text-gray-600 dark:text-gray-300">
+                        <div className="collapse-content text-sm text-gray-600">
                             {item.answer}
                         </div>
                     </div>

@@ -22,28 +22,28 @@ const fetchPosts = async () => {
 };
 
 const PostSkeleton = () => (
-    <div className="bg-white dark:bg-white rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
+    <div className="bg-white rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
         {/* Top section: author info */}
         <div className="flex items-center mb-3">
-            <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-100 mr-3"></div>
+            <div className="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
             <div className="flex-1">
-                <div className="w-24 h-3 bg-gray-300 dark:bg-gray-200 rounded mb-2"></div>
-                <div className="w-16 h-2 bg-gray-200 dark:bg-gray-100 rounded"></div>
+                <div className="w-24 h-3 bg-gray-300 rounded mb-2"></div>
+                <div className="w-16 h-2 bg-gray-200 rounded"></div>
             </div>
         </div>
 
         {/* Title & Description */}
         <div className="mb-3 flex-1">
-            <div className="w-3/4 h-4 bg-gray-300 dark:bg-gray-200 rounded mb-2"></div>
-            <div className="w-full h-3 bg-gray-200 dark:bg-gray-100 rounded mb-1"></div>
-            <div className="w-5/6 h-3 bg-gray-200 dark:bg-gray-100 rounded"></div>
+            <div className="w-3/4 h-4 bg-gray-300 rounded mb-2"></div>
+            <div className="w-full h-3 bg-gray-200 rounded mb-1"></div>
+            <div className="w-5/6 h-3 bg-gray-200 rounded"></div>
         </div>
 
         {/* Bottom icons */}
         <div className="flex items-center gap-4 mt-2">
-            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
-            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
-            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
+            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+            <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
         </div>
     </div>
 );
@@ -83,7 +83,7 @@ const PostLists = () => {
                         return (
                             <div
                                 key={post._id}
-                                className="bg-white dark:bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
+                                className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
                                 onClick={(e) => {
                                     if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
                                     navigate(`/posts/${post._id}`);
@@ -106,8 +106,8 @@ const PostLists = () => {
 
                                 {/* Post Content */}
                                 <div className="mb-3">
-                                    <h3 className="text-lg font-bold mb-2 text-gray-500">{post.postTitle || ""}</h3>
-                                    <p className="text-gray-500">{post.postDescription || ""}</p>
+                                    <h3 className="text-lg font-bold mb-2 text-gray-700">{post.postTitle || ""}</h3>
+                                    <p className="text-gray-600">{post.postDescription || ""}</p>
                                 </div>
 
                                 {/* Action Buttons */}
@@ -126,7 +126,7 @@ const PostLists = () => {
                                     </button>
                                     <button
                                         onClick={() => navigate(`/posts/${post._id}`)}
-                                        className="comment-btn flex items-center gap-1 text-gray-500 hover:text-blue-600 cursor-pointer transition"
+                                        className="comment-btn flex items-center gap-1 text-gray-600 hover:text-blue-600 cursor-pointer transition"
                                     >
                                         <FaComment /> {post.comments?.length || 0}
                                     </button>
@@ -152,4 +152,3 @@ const PostLists = () => {
 };
 
 export default PostLists;
-

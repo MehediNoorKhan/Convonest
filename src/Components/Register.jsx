@@ -109,48 +109,57 @@ const Register = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-base-200 px-4 sm:px-6">
+        <div
+            className="flex items-center justify-center min-h-screen px-4 sm:px-6 transition-all duration-500"
+            style={{ backgroundColor: "rgb(245, 245, 245)" }} // light gray like bg-base-200
+        >
             <ToastContainer position="top-right" autoClose={2000} />
-            <div className="w-full max-w-sm sm:max-w-md p-6 bg-base-100 rounded-lg shadow-lg">
-                <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
+            <div className="w-full max-w-sm sm:max-w-md p-6 bg-white dark:bg-blue-200 rounded-lg shadow-lg transition-colors duration-500">
+                <h2 className="text-2xl font-bold mb-4 text-center text-gray-900 dark:text-gray-800">
+                    Register
+                </h2>
 
                 <form className="space-y-3" onSubmit={handleSubmit}>
                     <input
                         type="text"
                         placeholder="Full Name"
-                        className="input input-primary w-full"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
+                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="email"
                         placeholder="Email"
-                        className="input input-primary w-full"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
+                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="password"
                         placeholder="Password"
-                        className="input input-primary w-full"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        className="input input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                     />
                     <input
                         type="file"
                         accept="image/*"
-                        className="file-input file-input-bordered w-full"
                         onChange={handleImageChange}
                         required
+                        className="file-input file-input-bordered w-full bg-white text-gray-500 placeholder-gray-400 transition-colors duration-500"
                     />
 
                     <button
                         type="submit"
-                        className="btn btn-primary w-full"
                         disabled={loading}
+                        className={`w-full text-white font-semibold py-2 px-4 rounded transition-all
+          ${loading
+                                ? "bg-blue-600 opacity-80 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700"
+                            }`}
                     >
                         {loading ? "Registering..." : "Register"}
                     </button>
@@ -161,6 +170,9 @@ const Register = () => {
                 </div>
             </div>
         </div>
+
+
+
     );
 };
 

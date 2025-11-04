@@ -99,17 +99,23 @@ export default function Banner({ selectedTag }) {
     };
 
     return (
-        <div className={`w-full pt-20 pb-4 transition-all duration-500 ${getSectionHeight()} bg-base-200`}>
+        <div
+            className={`w-full pt-20 pb-4 transition-all duration-500 ${getSectionHeight()}`}
+            style={{ backgroundColor: "rgb(245, 245, 245)" }} // light gray like bg-base-200
+        >
+
+
             {/* Search Bar */}
             <div className="max-w-4xl mx-auto text-center space-y-4 px-4 sm:px-6">
                 <form onSubmit={handleSearch} className="flex flex-wrap justify-center mt-6 gap-2">
                     <input
                         type="text"
                         placeholder="Search by Tag"
-                        className="input input-primary w-full sm:w-64 md:w-1/2"
+                        className="input input-primary w-full sm:w-64 md:w-1/2 bg-white text-gray-800 dark:bg-white dark:text-gray-800 border border-gray-300 placeholder-gray-400 focus:outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+
                     <button type="submit" className="btn btn-primary flex-1 sm:flex-none">
                         Search
                     </button>
@@ -132,7 +138,7 @@ export default function Banner({ selectedTag }) {
                         {Array.from({ length: Math.min(expectedCount, 6) }).map((_, idx) => (
                             <div
                                 key={idx}
-                                className="skeleton h-80 w-full rounded-lg bg-gray-200 dark:bg-gray-100 animate-pulse"
+                                className="skeleton h-80 w-full rounded-lg bg-gray-200 animate-pulse"
                             />
                         ))}
                     </div>
@@ -148,7 +154,7 @@ export default function Banner({ selectedTag }) {
                             return (
                                 <div
                                     key={post._id}
-                                    className="bg-white text-gray-500 dark:bg-white dark:text-gray-500 rounded-lg shadow-md p-4 cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl flex flex-col justify-between h-full"
+                                    className="bg-white text-gray-500 rounded-lg shadow-md p-4 cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl flex flex-col justify-between h-full"
                                     onClick={(e) => {
                                         if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
                                         navigate(`/posts/${post._id}`);
@@ -172,7 +178,7 @@ export default function Banner({ selectedTag }) {
                                         <h3 className="text-lg font-bold mb-2 truncate text-gray-500">{post.postTitle}</h3>
                                         <p className="line-clamp-3 text-gray-500">{post.postDescription}</p>
                                         {post.tag && (
-                                            <p className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm mt-2 dark:bg-gray-200/50 dark:text-gray-700">
+                                            <p className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm mt-2">
                                                 {post.tag}
                                             </p>
                                         )}
@@ -211,7 +217,6 @@ export default function Banner({ selectedTag }) {
                     </p>
                 )}
             </div>
-
         </div>
     );
 }

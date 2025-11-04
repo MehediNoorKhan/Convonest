@@ -23,7 +23,7 @@ export default function AllAnnouncements() {
     const currentAnnouncements = announcements.slice(startIndex, startIndex + itemsPerPage);
 
     const AnnouncementSkeleton = () => (
-        <div className="bg-white dark:bg-gray-100 rounded-lg shadow-md p-4 animate-pulse h-[220px]" />
+        <div className="bg-white rounded-lg shadow-md p-4 animate-pulse h-[220px]" />
     );
 
     if (isError) return <FailedToLoad />;
@@ -42,7 +42,7 @@ export default function AllAnnouncements() {
                         currentAnnouncements.map((a) => (
                             <div
                                 key={a._id}
-                                className="bg-white dark:bg-white text-gray-500 dark:text-gray-500 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition"
+                                className="bg-white text-gray-700 rounded-lg shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition"
                             >
                                 <div className="flex items-center gap-3 mb-3">
                                     <img
@@ -54,17 +54,17 @@ export default function AllAnnouncements() {
                                         <p className="font-semibold text-black">
                                             {a.authorName}
                                         </p>
-                                        <p className="text-gray-400 text-sm">
+                                        <p className="text-gray-500 text-sm">
                                             {new Date(a.creation_time).toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
                                 <h3 className="text-lg font-bold mb-2">{a.title}</h3>
-                                <p className="text-gray-500">{a.description}</p>
+                                <p className="text-gray-700">{a.description}</p>
                             </div>
                         ))
                     ) : (
-                        <p className="col-span-2 text-center text-gray-500 mt-6">
+                        <p className="col-span-2 text-center text-gray-700 mt-6">
                             No announcements found
                         </p>
                     )}
@@ -76,19 +76,19 @@ export default function AllAnnouncements() {
                     <button
                         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
-                        className="btn btn-primary disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 shadow disabled:opacity-50 transition"
                     >
                         Prev
                     </button>
 
-                    <span className="text-gray-700 dark:text-gray-400">
+                    <span className="text-gray-800">
                         Page {currentPage} of {totalPages}
                     </span>
 
                     <button
                         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
-                        className="btn btn-primary disabled:opacity-50"
+                        className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-800 shadow disabled:opacity-50 transition"
                     >
                         Next
                     </button>
