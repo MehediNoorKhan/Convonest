@@ -2,225 +2,154 @@ import React, { useContext } from "react";
 import { useNavigate } from "react-router";
 import { FaThumbsUp, FaThumbsDown, FaComment } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import useAxiosSecure from "./useAxiosSecure";
 import { AuthContext } from "./AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import LoadingSpinner from "./LoadingSpinner";
+import FailedToLoad from "./FailedToLoad";
 
-const fetchPosts = async ({ queryKey }) => {
-    const [_key, { popularity, page }] = queryKey;
+const fetchPosts = async () => {
     const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
-        params: { sort: popularity ? "popularity" : undefined, page, limit: 5 },
+        params: { page: 1, limit: 8 },
     });
-    return {
-        posts: (res.data.posts || []).map((p) => ({
-            ...p,
-            upVote: p.upVote ?? 0,
-            downVote: p.downVote ?? 0,
-            comments: p.comments || [],
-            upvote_by: p.upvote_by || [],
-            downvote_by: p.downvote_by || [],
-        })),
-        totalPages: res.data.totalPages || 1,
-        currentPage: res.data.currentPage || 1,
-    };
+    return (res.data.posts || []).map((p) => ({
+        ...p,
+        upVote: p.upVote ?? 0,
+        downVote: p.downVote ?? 0,
+        comments: p.comments || [],
+        upvote_by: p.upvote_by || [],
+        downvote_by: p.downvote_by || [],
+    }));
 };
+
+const PostSkeleton = () => (
+    <div className="bg-white dark:bg-white rounded-lg shadow-md p-4 animate-pulse h-full flex flex-col justify-between">
+        {/* Top section: author info */}
+        <div className="flex items-center mb-3">
+            <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-100 mr-3"></div>
+            <div className="flex-1">
+                <div className="w-24 h-3 bg-gray-300 dark:bg-gray-200 rounded mb-2"></div>
+                <div className="w-16 h-2 bg-gray-200 dark:bg-gray-100 rounded"></div>
+            </div>
+        </div>
+
+        {/* Title & Description */}
+        <div className="mb-3 flex-1">
+            <div className="w-3/4 h-4 bg-gray-300 dark:bg-gray-200 rounded mb-2"></div>
+            <div className="w-full h-3 bg-gray-200 dark:bg-gray-100 rounded mb-1"></div>
+            <div className="w-5/6 h-3 bg-gray-200 dark:bg-gray-100 rounded"></div>
+        </div>
+
+        {/* Bottom icons */}
+        <div className="flex items-center gap-4 mt-2">
+            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
+            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
+            <div className="w-6 h-6 bg-gray-300 dark:bg-gray-200 rounded-full"></div>
+        </div>
+    </div>
+);
 
 const PostLists = () => {
     const { user } = useContext(AuthContext);
-    const axiosSecure = useAxiosSecure();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
-    const [sortByPopularity, setSortByPopularity] = React.useState(false);
-    const [currentPage, setCurrentPage] = React.useState(1);
-
-    const { data, isLoading } = useQuery({
-        queryKey: ["posts", { popularity: sortByPopularity, page: currentPage }],
+    const { data: posts, isLoading, isError } = useQuery({
+        queryKey: ["posts-limited"],
         queryFn: fetchPosts,
-        keepPreviousData: true,
     });
 
-    const voteMutation = useMutation({
-        mutationFn: async ({ postId, type }) => axiosSecure.post(`/posts/${postId}/vote`, { type }),
-        onMutate: async ({ postId, type }) => {
-            await queryClient.cancelQueries({ queryKey: ["posts", { popularity: sortByPopularity, page: currentPage }] });
-            const previousData = queryClient.getQueryData(["posts", { popularity: sortByPopularity, page: currentPage }]);
-            queryClient.setQueryData(["posts", { popularity: sortByPopularity, page: currentPage }], (oldData) => {
-                if (!oldData) return oldData;
-                const updatedPosts = oldData.posts.map((p) => {
-                    if (p._id !== postId) return p;
-                    const userIdentifier = user.email?.toLowerCase() || user._id?.toString() || user.id?.toString();
-                    let upVote = p.upVote ?? 0;
-                    let downVote = p.downVote ?? 0;
-                    let upvote_by = p.upvote_by ?? [];
-                    let downvote_by = p.downvote_by ?? [];
-
-                    if (type === "upvote") {
-                        if (upvote_by.includes(userIdentifier)) {
-                            upVote -= 1;
-                            upvote_by = upvote_by.filter((id) => id !== userIdentifier);
-                        } else {
-                            upVote += 1;
-                            upvote_by = [...upvote_by, userIdentifier];
-                            if (downvote_by.includes(userIdentifier)) {
-                                downVote -= 1;
-                                downvote_by = downvote_by.filter((id) => id !== userIdentifier);
-                            }
-                        }
-                    } else if (type === "downvote") {
-                        if (downvote_by.includes(userIdentifier)) {
-                            downVote -= 1;
-                            downvote_by = downvote_by.filter((id) => id !== userIdentifier);
-                        } else {
-                            downVote += 1;
-                            downvote_by = [...downvote_by, userIdentifier];
-                            if (upvote_by.includes(userIdentifier)) {
-                                upVote -= 1;
-                                upvote_by = upvote_by.filter((id) => id !== userIdentifier);
-                            }
-                        }
-                    }
-
-                    return { ...p, upVote, downVote, upvote_by, downvote_by };
-                });
-                return { ...oldData, posts: updatedPosts };
-            });
-
-            return { previousData };
-        },
-        onError: (err, variables, context) => {
-            Swal.fire({ icon: "error", title: "Failed to vote" });
-            if (context?.previousData) {
-                queryClient.setQueryData(["posts", { popularity: sortByPopularity, page: currentPage }], context.previousData);
-            }
-        },
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["posts", { popularity: sortByPopularity, page: currentPage }] });
-        },
-    });
+    if (isError) return <FailedToLoad />;
+    if (!posts?.length && !isLoading) return <p className="text-center mt-6">No posts found</p>;
 
     const handleVote = (postId, type) => {
-        if (!user) {
+        if (!user?.email) {
             Swal.fire({ icon: "warning", title: "Please login to vote" });
             return;
         }
-        voteMutation.mutate({ postId, type });
+        // vote logic
     };
 
-    if (isLoading) return <LoadingSpinner></LoadingSpinner>;
-    if (!data || data.posts.length === 0) return <p className="text-center mt-6">No posts found</p>;
-
     return (
-        <div className="bg-gray-50 pt-8 pb-8 max-w-7xl mx-auto py-4">
-            {/* Title */}
-            <h3 className="text-3xl font-bold text-center mb-6">Posts</h3>
+        <div className="pt-8 pb-4 max-w-7xl mx-auto">
+            <h3 className="text-3xl font-bold text-primary mb-6 px-6">Posts</h3>
 
-            {/* Sort button */}
-            <div className="flex justify-end mb-6 pr-6">
-                <button
-                    onClick={() => {
-                        setSortByPopularity((prev) => !prev);
-                        setCurrentPage(1);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition"
-                >
-                    {sortByPopularity ? "Show Latest" : "Sort by Popularity"}
-                </button>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 px-6">
+                {isLoading
+                    ? Array.from({ length: 8 }).map((_, idx) => <PostSkeleton key={idx} />)
+                    : posts.map((post) => {
+                        const userId = user?._id || user?.id;
+                        const hasUpvoted = post.upvote_by?.includes(userId);
+                        const hasDownvoted = post.downvote_by?.includes(userId);
 
-            {/* Post cards grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
-                {data.posts.map((post) => {
-                    const userId = user?._id || user?.id;
-                    const hasUpvoted = post.upvote_by?.includes(userId);
-                    const hasDownvoted = post.downvote_by?.includes(userId);
+                        return (
+                            <div
+                                key={post._id}
+                                className="bg-white dark:bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl hover:scale-[1.02] transition flex flex-col justify-between h-full"
+                                onClick={(e) => {
+                                    if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
+                                    navigate(`/posts/${post._id}`);
+                                }}
+                            >
+                                {/* Author Info */}
+                                <div className="flex items-center mb-3">
+                                    <img
+                                        src={post.authorImage || "/default-avatar.png"}
+                                        alt={post.authorName || "Unknown"}
+                                        className="w-10 h-10 rounded-full mr-3 object-cover"
+                                    />
+                                    <div>
+                                        <p className="font-semibold text-black">{post.authorName || "Unknown"}</p>
+                                        <p className="text-gray-400 text-sm">
+                                            {new Date(post.creation_time).toLocaleString()}
+                                        </p>
+                                    </div>
+                                </div>
 
-                    return (
-                        <div
-                            key={post._id}
-                            className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl transition flex flex-col justify-between h-full"
-                            onClick={(e) => {
-                                if (e.target.closest(".vote-btn") || e.target.closest(".comment-btn")) return;
-                                navigate(`/postdetails/${post._id}`);
-                            }}
-                        >
-                            {/* Author info */}
-                            <div className="flex items-center mb-3">
-                                <img
-                                    src={post.authorImage || "/default-avatar.png"}
-                                    alt={post.authorName || "Unknown"}
-                                    className="w-10 h-10 rounded-full mr-3 object-cover"
-                                />
-                                <div>
-                                    <p className="font-semibold">{post.authorName || "Unknown"}</p>
-                                    <p className="text-gray-500 text-sm">
-                                        {new Date(post.creation_time).toLocaleString()}
-                                    </p>
+                                {/* Post Content */}
+                                <div className="mb-3">
+                                    <h3 className="text-lg font-bold mb-2 text-gray-500">{post.postTitle || ""}</h3>
+                                    <p className="text-gray-500">{post.postDescription || ""}</p>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex items-center gap-4 mt-2">
+                                    <button
+                                        onClick={() => handleVote(post._id, "upvote")}
+                                        className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"} hover:text-green-600 cursor-pointer transition`}
+                                    >
+                                        <FaThumbsUp /> {post.upVote}
+                                    </button>
+                                    <button
+                                        onClick={() => handleVote(post._id, "downvote")}
+                                        className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"} hover:text-red-600 cursor-pointer transition`}
+                                    >
+                                        <FaThumbsDown /> {post.downVote}
+                                    </button>
+                                    <button
+                                        onClick={() => navigate(`/posts/${post._id}`)}
+                                        className="comment-btn flex items-center gap-1 text-gray-500 hover:text-blue-600 cursor-pointer transition"
+                                    >
+                                        <FaComment /> {post.comments?.length || 0}
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Post content */}
-                            <div className="mb-3">
-                                <h3 className="text-lg font-bold mb-2">{post.postTitle || ""}</h3>
-                                <p className="text-gray-700">{post.postDescription || ""}</p>
-                                <p className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm mt-2">
-                                    #{post.tag || ""}
-                                </p>
-                            </div>
-
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-4 mt-2">
-                                <button
-                                    onClick={() => handleVote(post._id, "upvote")}
-                                    className={`vote-btn flex items-center gap-1 ${hasUpvoted ? "text-green-600 font-bold" : "text-gray-600"
-                                        } hover:text-green-600 transition`}
-                                >
-                                    <FaThumbsUp /> {post.upVote}
-                                </button>
-                                <button
-                                    onClick={() => handleVote(post._id, "downvote")}
-                                    className={`vote-btn flex items-center gap-1 ${hasDownvoted ? "text-red-600 font-bold" : "text-gray-600"
-                                        } hover:text-red-600 transition`}
-                                >
-                                    <FaThumbsDown /> {post.downVote}
-                                </button>
-                                <button
-                                    onClick={() => navigate(`/postdetails/${post._id}`)}
-                                    className="comment-btn flex items-center gap-1 text-gray-500 hover:text-blue-600 transition"
-                                >
-                                    <FaComment /> {post.comments.length}
-                                </button>
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
             </div>
 
-            {/* Pagination */}
-            <div className="flex justify-center items-center gap-2 mt-6 pb-6">
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-yellow-300 rounded cursor-pointer disabled:opacity-50 hover:bg-yellow-500 transition"
-                >
-                    Prev
-                </button>
-                <span className="px-4">
-                    Page {currentPage} of {data.totalPages}
-                </span>
-                <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, data.totalPages))}
-                    disabled={currentPage === data.totalPages}
-                    className="px-4 py-2 bg-yellow-300 rounded cursor-pointer disabled:opacity-50 hover:bg-yellow-500 transition"
-                >
-                    Next
-                </button>
-            </div>
+            {/* See All Posts button */}
+            {!isLoading && posts?.length > 0 && (
+                <div className="flex justify-center mt-6">
+                    <button
+                        onClick={() => navigate("/all-posts")}
+                        className="btn btn-primary px-6 py-2 rounded-lg hover:scale-105 transition"
+                    >
+                        See All Posts
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
 
 export default PostLists;
-``;
+

@@ -1,16 +1,14 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams } from "react-router";
 import { AuthContext } from "../Components/AuthContext";
 import useAxiosSecure from "../Components/useAxiosSecure";
-import Swal from "sweetalert2";
-import { AwesomeButton } from "react-awesome-button";
-import "react-awesome-button/dist/styles.css";
-import { FaThumbsUp, FaThumbsDown } from "react-icons/fa";
-import LoadingSpinner from "../Components/LoadingSpinner";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import FailedToLoad from "../Components/FailedToLoad";
+import PostCommentsSkeleton from "../skeletons/PostCommentsSkeleton";
 
 export default function PostComments() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const { user } = useContext(AuthContext);
     const axiosSecure = useAxiosSecure();
 
@@ -20,10 +18,10 @@ export default function PostComments() {
     const [error, setError] = useState(null);
     const [reportedComments, setReportedComments] = useState(new Set());
     const [selectedFeedback, setSelectedFeedback] = useState({});
-    const [page, setPage] = useState(1);
-    const [totalComments, setTotalComments] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const limit = 5;
 
+    const [totalComments, setTotalComments] = useState(0);
     const totalPages = Math.ceil(totalComments / limit);
 
     const feedbackOptions = [
@@ -39,18 +37,22 @@ export default function PostComments() {
             setLoading(true);
             setError(null);
 
-            const response = await axiosSecure.get(`/posts/${id}/comments`, {
+            // Fetch comments first
+            const commentsRes = await axiosSecure.get(`/posts/${id}/comments`, {
                 params: { page: pageNumber, limit },
             });
 
-            setPost(response.data.post || { postTitle: "Post Title" });
-            setComments(response.data.comments || []);
-            setTotalComments(response.data.totalComments || 0);
+            setComments(commentsRes.data.comments || []);
+            setTotalComments(commentsRes.data.totalComments || 0);
 
-            // Check report status
-            if (user && response.data.comments) {
+            // Fetch post separately to get the title
+            const postRes = await axiosSecure.get(`/posts/${id}`);
+            setPost(postRes.data || { postTitle: "Post Title" });
+
+            // Set reported status for each comment (if user exists)
+            if (user && commentsRes.data.comments) {
                 const reportStatuses = await Promise.all(
-                    response.data.comments.map(async (comment) => {
+                    commentsRes.data.comments.map(async (comment) => {
                         try {
                             const statusRes = await axiosSecure.get(
                                 `/comments/${comment._id}/report-status`
@@ -64,6 +66,7 @@ export default function PostComments() {
                         }
                     })
                 );
+
                 const reportedSet = new Set();
                 reportStatuses.forEach((status) => {
                     if (status.hasReported) reportedSet.add(status.commentId);
@@ -71,7 +74,7 @@ export default function PostComments() {
                 setReportedComments(reportedSet);
             }
         } catch (err) {
-            console.error("Error fetching comments:", err);
+            console.error("Error fetching comments or post:", err);
             setError("Failed to load comments");
         } finally {
             setLoading(false);
@@ -79,18 +82,8 @@ export default function PostComments() {
     };
 
     useEffect(() => {
-        fetchComments(page);
-    }, [page]);
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
+        fetchComments(currentPage);
+    }, [currentPage]);
 
     const handleFeedbackChange = (commentId, feedback) => {
         setSelectedFeedback((prev) => ({ ...prev, [commentId]: feedback }));
@@ -99,11 +92,7 @@ export default function PostComments() {
     const handleReport = async (commentId) => {
         const feedback = selectedFeedback[commentId];
         if (!feedback) {
-            Swal.fire({
-                icon: "warning",
-                title: "Select feedback",
-                text: "Please select a feedback option before reporting.",
-            });
+            toast.warn("Please select a feedback option before reporting.");
             return;
         }
 
@@ -121,142 +110,138 @@ export default function PostComments() {
                     return updated;
                 });
 
-                Swal.fire({
-                    icon: "success",
-                    title: "Reported!",
-                    text: "Comment reported successfully.",
-                });
+                toast.success("Comment reported successfully!");
             }
         } catch (err) {
             console.error(err);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Failed to report comment. Please try again.",
-            });
+            toast.error("Failed to report comment. Please try again.");
         }
     };
 
-    if (loading)
-        return (
-            <LoadingSpinner></LoadingSpinner>
-        );
+    if (loading) return <PostCommentsSkeleton />;
+    if (error) return <FailedToLoad />;
 
-    if (error)
+    if (!comments.length)
         return (
-            <div className="max-w-6xl mx-auto mt-6 p-6 bg-red-50 border border-red-200 rounded text-center">
-                <p className="text-red-800">{error}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                    Retry
-                </button>
+            <div className="max-w-7xl mx-auto h-[70vh] flex flex-col justify-center items-center py-8 dark:bg-gray-800 rounded text-center">
+                <p className="text-red-500 text-4xl dark:text-gray-300 mb-4">No comments yet</p>
             </div>
         );
 
     return (
-        <div className="max-w-7xl mx-auto mt-6 p-6 bg-gray-50 rounded shadow">
-            {/* Post Header */}
-            <div className="mb-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">{post.postTitle}</h1>
-                <div className="text-sm text-gray-500">
-                    {totalComments} {totalComments === 1 ? "Comment" : "Comments"}
-                </div>
-            </div>
+        <div className="max-w-6xl mx-auto mt-6 p-6 rounded dark:bg-gray-900">
+            <h2 className="text-2xl font-bold mb-6 text-primary dark:text-white">{post?.postTitle || "Post Title"}</h2>
 
-            {/* Comments Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse shadow-lg">
-                    <thead className="bg-blue-200">
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th className="p-3 text-left">Commenter</th>
-                            <th className="p-3 text-left">Comment</th>
-                            <th className="p-3 text-center">Feedback</th>
-                            <th className="p-3 text-center">Report</th>
+                            <th className="px-6 py-3">Commenter</th>
+                            <th className="px-6 py-3">Comment</th>
+                            <th className="px-6 py-3 text-center">Feedback</th>
+                            <th className="px-6 py-3 text-center">Report</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {comments.length === 0 ? (
-                            <tr>
-                                <td colSpan="4" className="p-6 text-center text-gray-500">
-                                    No comments yet
-                                </td>
-                            </tr>
-                        ) : (
-                            comments.map((c) => {
-                                const isReported = reportedComments.has(c._id);
-                                const selectedFeedbackForComment = selectedFeedback[c._id] || "";
-                                const canReport = selectedFeedbackForComment && !isReported && user;
+                        {comments.map((c, index) => {
+                            const isReported = reportedComments.has(c._id);
+                            const selectedFeedbackForComment = selectedFeedback[c._id] || "";
+                            const canReport = selectedFeedbackForComment && !isReported && user;
 
-                                return (
-                                    <tr
-                                        key={c._id}
-                                        className="hover:bg-blue-50 transition-colors cursor-pointer"
-                                    >
-                                        <td className="p-3 font-medium">{c.commenterEmail}</td>
-                                        <td className="p-3">{c.comment}</td>
-                                        <td className="p-3 text-center">
-                                            <select
-                                                value={selectedFeedbackForComment}
-                                                onChange={(e) =>
-                                                    handleFeedbackChange(c._id, e.target.value)
-                                                }
-                                                disabled={isReported || !user}
-                                                className="p-2 border rounded text-sm disabled:bg-gray-100"
-                                            >
-                                                {feedbackOptions.map((opt) => (
+                            return (
+                                <tr
+                                    key={c._id || index}
+                                    className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900 transition"
+                                >
+                                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                        {c.commenterEmail}
+                                    </td>
+                                    <td className="px-6 py-4">{c.comment}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <select
+                                            value={selectedFeedbackForComment}
+                                            onChange={(e) => handleFeedbackChange(c._id, e.target.value)}
+                                            disabled={isReported || !user}
+                                            className="select select-primary w-full"
+                                        >
+                                            <option value="" disabled>
+                                                Select feedback
+                                            </option>
+                                            {feedbackOptions
+                                                .filter((opt) => opt.value)
+                                                .map((opt) => (
                                                     <option key={opt.value} value={opt.value}>
                                                         {opt.label}
                                                     </option>
                                                 ))}
-                                            </select>
-                                        </td>
-                                        <td className="p-3 text-center">
-                                            <AwesomeButton
-                                                type={isReported ? "disabled" : "primary"}
-                                                disabled={!canReport}
-                                                onPress={() => handleReport(c._id)}
-                                                size="medium"
-                                            >
-                                                {isReported ? "Reported" : "Report"}
-                                            </AwesomeButton>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
+                                        </select>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button
+                                            className={`btn ${isReported ? "btn-success cursor-not-allowed" : "btn-error"}`}
+                                            disabled={isReported || !user || !selectedFeedback[c._id]}
+                                            onClick={() => handleReport(c._id)}
+                                        >
+                                            {isReported ? "Reported" : "Report"}
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex justify-center items-center mt-6 space-x-2">
-                    <button
-                        onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                        className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer"
-                    >
-                        Previous
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                        <button
-                            key={i + 1}
-                            onClick={() => setPage(i + 1)}
-                            className={`px-3 py-1 rounded cursor-pointer ${page === i + 1 ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
-                                }`}
+            <nav className="flex justify-center mt-6" aria-label="Page navigation">
+                <ul className="inline-flex -space-x-px text-sm">
+                    <li>
+                        <a
+                            href="#"
+                            className="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage > 1) setCurrentPage(currentPage - 1);
+                            }}
                         >
-                            {i + 1}
-                        </button>
+                            Previous
+                        </a>
+                    </li>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <li key={page}>
+                            <a
+                                href="#"
+                                aria-current={page === currentPage ? "page" : undefined}
+                                className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${page === currentPage
+                                    ? "text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white"
+                                    : ""
+                                    }`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(page);
+                                }}
+                            >
+                                {page}
+                            </a>
+                        </li>
                     ))}
-                    <button
-                        onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                        className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer"
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
+                    <li>
+                        <a
+                            href="#"
+                            className="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                            }}
+                        >
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            {/* Toast container */}
+            <ToastContainer position="top-right" autoClose={2000} />
         </div>
     );
 }

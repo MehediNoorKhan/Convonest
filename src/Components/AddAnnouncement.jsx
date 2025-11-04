@@ -1,13 +1,12 @@
 import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import imageCompression from "browser-image-compression";
-import Swal from "sweetalert2";
 import { AuthContext } from "./AuthContext";
 import useAxiosSecure from "./useAxiosSecure";
-import LoadingSpinner from "./LoadingSpinner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AwesomeButton } from "react-awesome-button";
-import "react-awesome-button/dist/styles.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AddAnnouncementSkeleton from "../skeletons/AddAnnouncementsSkeleton";
 
 export default function AddAnnouncement() {
     const { user, loading } = useContext(AuthContext);
@@ -21,38 +20,29 @@ export default function AddAnnouncement() {
 
     const authorImage = watch("authorImage");
 
-    // Mutation for adding announcement
     const addAnnouncementMutation = useMutation({
         mutationFn: async (announcement) => {
             const { data } = await axiosSecure.post("/announcements", announcement);
             return data;
         },
         onSuccess: () => {
-            Swal.fire({
-                icon: "success",
-                title: "Success!",
-                text: "Announcement added successfully",
-                timer: 2000,
-                showConfirmButton: false,
-            });
+            toast.success("Announcement added successfully!", { position: "top-right", autoClose: 2000 });
             reset();
             setImageUploaded(false);
             queryClient.invalidateQueries({ queryKey: ["announcements"] });
         },
         onError: (error) => {
             console.error(error);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Failed to add announcement",
-            });
+            toast.error("Failed to add announcement!", { position: "top-right", autoClose: 2500 });
         },
     });
 
-    // Image upload handler
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            toast.warning("Please select an image first!", { autoClose: 2000 });
+            return;
+        }
 
         setUploading(true);
         setImageUploaded(false);
@@ -78,24 +68,15 @@ export default function AddAnnouncement() {
             }
         } catch (err) {
             console.error(err);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "Image upload failed",
-            });
+            toast.error("Image upload failed!", { autoClose: 1500 });
         } finally {
             setUploading(false);
         }
     };
 
-    // Form submission
     const onSubmit = async (formData) => {
         if (!user?.email) {
-            Swal.fire({
-                icon: "warning",
-                title: "Login Required",
-                text: "Please login to add an announcement",
-            });
+            toast.warning("Please login to add an announcement!", { autoClose: 2000 });
             return;
         }
 
@@ -111,106 +92,90 @@ export default function AddAnnouncement() {
         addAnnouncementMutation.mutate(announcement);
     };
 
-    if (loading) return <LoadingSpinner />;
+    if (loading) return <AddAnnouncementSkeleton />;
     if (!user) {
         window.location.href = "/login";
         return null;
     }
 
     return (
-        <div className="max-w-4xl mx-auto mt-8 mb-8 p-8 rounded-xl shadow-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 animate-slideUp">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8">
-                <h2 className="text-4xl font-bold mb-8 text-center text-white drop-shadow-lg animate-fadeIn">
-                    Add Announcement
-                </h2>
+        <div className="max-w-4xl w-full mx-auto mt-6 mb-8 p-4 sm:p-6 md:p-8 rounded-xl shadow-2xl bg-white">
+            <ToastContainer position="top-right" autoClose={2000} />
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Author Name */}
-                    <div>
-                        <label className="block text-white font-semibold mb-2 text-lg">
-                            Author Name
-                        </label>
-                        <input
-                            type="text"
-                            {...register("authorName", { required: true })}
-                            placeholder="Enter author name"
-                            className="w-full px-4 py-3 rounded-lg text-gray-800 bg-white border-2 border-transparent focus:border-yellow-300 focus:outline-none transition cursor-pointer"
-                        />
-                    </div>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 text-center text-primary">
+                Add Announcement
+            </h2>
 
-                    {/* Author Image */}
-                    <div>
-                        <label className="block text-white font-semibold mb-2 text-lg">
-                            Author Image
-                        </label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="w-full px-4 py-3 rounded-lg text-white bg-white/20 backdrop-blur-sm border-2 border-white/30 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white file:text-purple-600 file:font-semibold hover:file:bg-gray-100 transition"
-                        />
-                    </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+                {/* Author Name */}
+                <div>
+                    <label className="block text-sm sm:text-base md:text-lg font-semibold text-[#00CCFF] mb-1 sm:mb-2">
+                        Author Name
+                    </label>
+                    <input
+                        type="text"
+                        {...register("authorName", { required: true })}
+                        placeholder="Enter author name"
+                        className="input input-primary w-full text-sm sm:text-base md:text-lg"
+                    />
+                </div>
 
-                    <input type="hidden" {...register("authorImage", { required: true })} />
+                {/* Author Image */}
+                <div>
+                    <label className="block text-sm sm:text-base md:text-lg font-semibold text-[#00CCFF] mb-1 sm:mb-2">
+                        Author Image
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="file-input file-input-bordered w-full"
+                    />
+                </div>
 
-                    {/* Title */}
-                    <div>
-                        <label className="block text-white font-semibold mb-2 text-lg">
-                            Announcement Title
-                        </label>
-                        <input
-                            type="text"
-                            {...register("title", { required: true })}
-                            placeholder="Enter announcement title"
-                            className="w-full px-4 py-3 rounded-lg text-gray-800 bg-white border-2 border-transparent focus:border-yellow-300 focus:outline-none transition cursor-pointer"
-                        />
-                    </div>
+                <input type="hidden" {...register("authorImage", { required: true })} />
 
-                    {/* Description */}
-                    <div>
-                        <label className="block text-white font-semibold mb-2 text-lg">
-                            Description
-                        </label>
-                        <textarea
-                            {...register("description", { required: true })}
-                            placeholder="Enter announcement description"
-                            rows={5}
-                            className="w-full px-4 py-3 rounded-lg text-gray-800 bg-white border-2 border-transparent focus:border-yellow-300 focus:outline-none transition resize-none cursor-pointer"
-                        />
-                    </div>
+                {/* Title */}
+                <div>
+                    <label className="block text-sm sm:text-base md:text-lg font-semibold text-[#00CCFF] mb-1 sm:mb-2">
+                        Announcement Title
+                    </label>
+                    <input
+                        type="text"
+                        {...register("title", { required: true })}
+                        placeholder="Enter announcement title"
+                        className="input input-primary w-full text-sm sm:text-base md:text-lg"
+                    />
+                </div>
 
-                    {/* Submit Button */}
-                    <div className="flex justify-center pt-4">
-                        <AwesomeButton
-                            type="primary"
-                            size="large"
-                            disabled={uploading || !imageUploaded || addAnnouncementMutation.isLoading}
-                            className="cursor-pointer"
-                        >
-                            {addAnnouncementMutation.isLoading
-                                ? "Adding..."
-                                : uploading
-                                    ? "Uploading Image..."
-                                    : "Add Announcement"}
-                        </AwesomeButton>
-                    </div>
-                </form>
-            </div>
+                {/* Description */}
+                <div>
+                    <label className="block text-sm sm:text-base md:text-lg font-semibold text-[#00CCFF] mb-1 sm:mb-2">
+                        Description
+                    </label>
+                    <textarea
+                        {...register("description", { required: true })}
+                        placeholder="Write the announcement details here..."
+                        rows={5}
+                        className="textarea textarea-primary w-full text-sm sm:text-base md:text-lg"
+                    />
+                </div>
 
-            {/* Animations */}
-            <style>{`
-                @keyframes fadeIn {
-                    0% { opacity: 0; transform: translateY(20px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fadeIn { animation: fadeIn 0.5s ease forwards; }
-
-                @keyframes slideUp {
-                    0% { opacity: 0; transform: translateY(40px); }
-                    100% { opacity: 1; transform: translateY(0); }
-                }
-                .animate-slideUp { animation: slideUp 0.6s ease forwards; }
-            `}</style>
+                {/* Submit Button */}
+                <div className="flex justify-center pt-2 sm:pt-4">
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-full sm:w-1/2 md:w-1/3"
+                        disabled={uploading || !imageUploaded || addAnnouncementMutation.isLoading}
+                    >
+                        {addAnnouncementMutation.isLoading
+                            ? "Adding..."
+                            : uploading
+                                ? "Uploading Image..."
+                                : "Add Announcement"}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 }

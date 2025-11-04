@@ -3,7 +3,7 @@ import useAxiosSecure from "../Components/useAxiosSecure";
 import { AuthContext } from "../Components/AuthContext";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import LoadingSpinner from "../Components/LoadingSpinner";
+import AdminProfileSkeleton from "../Skeletons/AdminProfileSkeleton";
 
 const MySwal = withReactContent(Swal);
 
@@ -16,7 +16,6 @@ export default function AdminProfile() {
 
     const API_BASE = import.meta.env.VITE_API_URL;
 
-    // 🔹 Fetch admin data from MongoDB
     useEffect(() => {
         if (!user?.email) return;
 
@@ -37,7 +36,6 @@ export default function AdminProfile() {
         fetchAdmin();
     }, [user, axiosSecure]);
 
-    // 🔹 Handle tag submission with SweetAlert2
     const handleTagSubmit = async (e) => {
         e.preventDefault();
         if (!tags) return;
@@ -63,46 +61,44 @@ export default function AdminProfile() {
         }
     };
 
-    if (loading)
-        return (
-            <LoadingSpinner></LoadingSpinner>
-        );
+    if (loading) return <AdminProfileSkeleton />;
 
     if (!adminData)
         return (
-            <div className="text-center mt-10 text-gray-600">
-                Admin data not found.
+            <div className="max-w-7xl mx-auto mt-10 p-6 flex flex-col justify-center items-center bg-gray-100 rounded-xl">
+                <h3 className="text-3xl font-semibold mb-3 text-red-500">No Admin Data Found</h3>
+                <p className="text-xl text-error">
+                    It seems there is currently no admin data available. Please check back later!
+                </p>
             </div>
         );
+
 
     return (
         <div className="space-y-6 p-6 max-w-3xl mx-auto">
             {/* Admin Info Card */}
-            <div className="bg-white p-6 rounded shadow text-center opacity-0 animate-fadeIn cursor-pointer">
+            <div className="bg-[#2a52be] p-6 rounded-xl shadow-lg text-center opacity-0 animate-fadeIn cursor-pointer transform transition hover:scale-105">
                 <img
                     src={adminData.avatar || "https://via.placeholder.com/120"}
                     alt={adminData.fullName}
-                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
+                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
                 />
-                <h2 className="text-2xl font-bold">{adminData.fullName}</h2>
-                <p className="text-gray-500">{adminData.email}</p>
+                <h2 className="text-2xl font-bold text-white">{adminData.fullName}</h2>
+                <p className="text-white/80">{adminData.email}</p>
             </div>
 
             {/* Add Tag Form */}
-            <div className="bg-white p-6 rounded shadow opacity-0 animate-slideUp">
-                <h2 className="text-xl font-bold mb-4">Add New Tag</h2>
+            <div className="bg-white p-6 rounded-xl shadow-lg opacity-0 animate-slideUp">
+                <h2 className="text-xl font-bold mb-4 text-gray-700">Add New Tag</h2>
                 <form onSubmit={handleTagSubmit} className="flex flex-col gap-4">
                     <input
                         type="text"
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
-                        placeholder="Enter tag name"
-                        className="border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 transition cursor-pointer"
+                        placeholder="Add a frequently used word"
+                        className="input input-primary w-full"
                     />
-                    <button
-                        type="submit"
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transform hover:scale-105 transition cursor-pointer"
-                    >
+                    <button type="submit" className="btn btn-primary">
                         Add Tag
                     </button>
                 </form>

@@ -1,12 +1,10 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../Components/AuthContext";
 import useAxiosSecure from "../Components/useAxiosSecure";
-import { AwesomeButton } from "react-awesome-button";
-import "react-awesome-button/dist/styles.css";
 import { FaTrash, FaCommentDots } from "react-icons/fa";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import LoadingSpinner from "../Components/LoadingSpinner";
+import MyPostsSkeleton from "../skeletons/MyPostsSkeleton";
 import FailedToLoad from "../Components/FailedToLoad";
 
 const MySwal = withReactContent(Swal);
@@ -30,7 +28,7 @@ export default function MyPosts() {
                 setLoading(true);
                 setError(null);
                 const res = await axiosSecure.get(`/myposts/${user.email}`);
-                if (res.data.success) setPosts(res.data.data);
+                if (res.data.success) setPosts(res.data.data || []);
                 else setError("Failed to fetch posts");
             } catch (err) {
                 console.error("Error fetching posts:", err);
@@ -60,36 +58,45 @@ export default function MyPosts() {
             try {
                 await axiosSecure.delete(`/posts/${postId}`);
                 setPosts(posts.filter((post) => post._id !== postId));
-                MySwal.fire("Deleted!", "Your post has been deleted.", "success");
+
+                // 🔹 Toast after successful delete
+                MySwal.fire({
+                    icon: "success",
+                    title: "Post deleted successfully!",
+                    toast: true,
+                    position: "top-right",
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
             } catch (err) {
                 console.error(err);
-                MySwal.fire("Error!", "Failed to delete post.", "error");
+                MySwal.fire({
+                    icon: "error",
+                    title: "Failed to delete post.",
+                    toast: true,
+                    position: "top-right",
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
             }
         }
     };
 
-    if (loading)
-        return (
-            <LoadingSpinner></LoadingSpinner>
-        );
-
-    if (error)
-        return (
-            <FailedToLoad></FailedToLoad>
-        );
+    if (loading) return <MyPostsSkeleton />;
+    if (error) return <FailedToLoad />;
 
     if (!posts.length)
         return (
-            <div className="max-w-4xl mx-auto mt-6 p-8 bg-white shadow rounded text-center">
-                <h2 className="text-2xl font-bold mb-4">My Posts</h2>
-                <p className="text-gray-500 text-lg">No posts found</p>
-                <AwesomeButton
-                    type="primary"
-                    className="mt-4 cursor-pointer"
-                    onPress={() => (window.location.href = "/dashboard/addpost")}
-                >
-                    Create Post
-                </AwesomeButton>
+            <div className="max-w-7xl mx-auto">
+                <div className="h-[70vh] flex flex-col justify-center items-center py-8 dark:bg-gray-800 rounded text-center">
+                    <p className="text-red-500 text-4xl dark:text-gray-300 mb-4">You haven't posted anything yet</p>
+                    <button
+                        className="btn btn-outline btn-primary mt-2"
+                        onClick={() => (window.location.href = "/dashboard/addpost")}
+                    >
+                        Create Post
+                    </button>
+                </div>
             </div>
         );
 
@@ -100,75 +107,105 @@ export default function MyPosts() {
     const totalPages = Math.ceil(posts.length / postsPerPage);
 
     return (
-        <div className="max-w-6xl mx-auto mt-6 p-6 bg-gray-50 shadow rounded">
-            <h2 className="text-2xl font-bold mb-6">My Posts</h2>
+        <div className="max-w-6xl mx-auto mt-6 p-6 rounded dark:bg-gray-900">
+            <h2 className="text-2xl font-bold mb-6 text-primary dark:text-white">My Posts</h2>
 
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300 bg-white rounded-lg">
-                    <thead className="bg-blue-100">
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                         <tr>
-                            <th className="p-3 text-left">Title</th>
-                            <th className="p-3 text-center">Votes</th>
-                            <th className="p-3 text-center">Comment</th>
-                            <th className="p-3 text-center">Delete</th>
+                            <th className="px-6 py-3">Title</th>
+                            <th className="px-6 py-3 text-center">Votes</th>
+                            <th className="px-6 py-3 text-center">Comment</th>
+                            <th className="px-6 py-3 text-center">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {currentPosts.map((post) => (
-                            <tr
-                                key={post._id}
-                                className="hover:bg-blue-50 transition" // removed cursor-pointer
-                            >
-                                <td className="p-3 font-semibold text-gray-900">{post.postTitle}</td>
-                                <td className="p-3 text-center font-medium">
-                                    {(post.upVote || 0) - (post.downVote || 0)}
-                                </td>
-                                <td className="p-3 text-center">
-                                    <div className="inline-block">
-                                        <AwesomeButton
-                                            type="primary"
-                                            size="small"
-                                            onPress={() =>
+                        {currentPosts.map((post, index) => {
+                            const safeTitle = post.postTitle || "Untitled Post";
+                            const votes = (post.upVote || 0) - (post.downVote || 0);
+
+                            return (
+                                <tr
+                                    key={post._id || index}
+                                    className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900 transition"
+                                >
+                                    <th className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                                        {safeTitle}
+                                    </th>
+                                    <td className="px-6 py-4 text-center font-medium text-gray-900 dark:text-gray-200">{votes}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button
+                                            className="btn btn-outline btn-primary"
+                                            onClick={() =>
                                                 (window.location.href = `/dashboard/posts/${post._id}`)
                                             }
                                         >
-                                            <FaCommentDots className="mr-1" /> Comment
-                                        </AwesomeButton>
-                                    </div>
-                                </td>
-                                <td className="p-3 text-center">
-                                    <div className="inline-block">
-                                        <AwesomeButton
-                                            type="danger"
-                                            size="small"
-                                            onPress={() => deletePost(post._id)}
+                                            <FaCommentDots /> Comments
+                                        </button>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button
+                                            className="btn bg-red-500 text-white"
+                                            onClick={() => deletePost(post._id)}
                                         >
-                                            <FaTrash className="mr-1" /> Delete
-                                        </AwesomeButton>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                            <FaTrash /> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
-
                 </table>
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-center gap-2 mt-4">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 rounded ${page === currentPage
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-200 text-gray-700 hover:bg-blue-300"
-                            } cursor-pointer`}
-                    >
-                        {page}
-                    </button>
-                ))}
-            </div>
+            <nav className="flex justify-center mt-6" aria-label="Page navigation example">
+                <ul className="inline-flex -space-x-px text-sm">
+                    <li>
+                        <a
+                            href="#"
+                            className="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage > 1) setCurrentPage(currentPage - 1);
+                            }}
+                        >
+                            Previous
+                        </a>
+                    </li>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <li key={page}>
+                            <a
+                                href="#"
+                                aria-current={page === currentPage ? "page" : undefined}
+                                className={`flex items-center justify-center px-4 h-10 leading-tight border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${page === currentPage
+                                    ? "text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white"
+                                    : ""
+                                    }`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setCurrentPage(page);
+                                }}
+                            >
+                                {page}
+                            </a>
+                        </li>
+                    ))}
+                    <li>
+                        <a
+                            href="#"
+                            className="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                            }}
+                        >
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     );
 }

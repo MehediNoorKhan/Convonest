@@ -10,31 +10,16 @@ export default function useUserRole() {
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            console.log("Auth state changed, currentUser:", currentUser?.email); // Debug
-
-            if (currentUser && currentUser.email) {
+            if (currentUser?.email) {
                 try {
-                    console.log("Fetching role for:", currentUser.email); // Debug
-
-                    // Make sure the URL matches your backend route
-                    const res = await axiosSecure.get(`/users/role/${currentUser.email}`);
-
-                    console.log("Role response:", res.data); // Debug
-
-                    if (res.data && res.data.role) {
-                        setRole(res.data.role);
-                        console.log("Role set to:", res.data.role); // Debug
-                    } else {
-                        console.log("No role found in response"); // Debug
-                        setRole(null);
-                    }
+                    const email = currentUser.email.toLowerCase();
+                    const res = await axiosSecure.get(`/users/role/${email}`);
+                    setRole(res.data?.role || "user"); // fallback to user if role missing
                 } catch (error) {
                     console.error("Error fetching user role:", error);
-                    console.error("Error details:", error.response?.data); // Debug
-                    setRole(null);
+                    setRole("user"); // fallback
                 }
             } else {
-                console.log("No current user, setting role to null"); // Debug
                 setRole(null);
             }
             setLoading(false);
