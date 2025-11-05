@@ -76,6 +76,27 @@ const Login = () => {
                 </h2>
 
                 <form className="space-y-4" onSubmit={handleLogin}>
+                    {/* Preset User Credentials */}
+                    <div className="border p-4 rounded-md bg-gray-50">
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold">User email:</span> messi@gmail.com
+                        </p>
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Password:</span> Brock9173
+                        </p>
+                    </div>
+
+                    {/* Preset Admin Credentials */}
+                    <div className="border p-4 rounded-md bg-gray-50">
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Admin email:</span> ronaldo@gmail.com
+                        </p>
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold">Password:</span> Brock9173
+                        </p>
+                    </div>
+
+                    {/* Email Input */}
                     <div>
                         <label className="block mb-1 text-gray-600 dark:text-gray-700">Email</label>
                         <input
@@ -88,6 +109,7 @@ const Login = () => {
                         />
                     </div>
 
+                    {/* Password Input */}
                     <div>
                         <label className="block mb-1 text-gray-600 dark:text-gray-700">Password</label>
                         <input
@@ -100,17 +122,17 @@ const Login = () => {
                         />
                     </div>
 
+                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full text-white font-semibold py-2 px-4 rounded transition-all ${loading
-                            ? "bg-blue-600 opacity-80 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700"
+                        className={`w-full text-white font-semibold py-2 px-4 rounded transition-all ${loading ? "bg-blue-600 opacity-80 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                             }`}
                     >
                         {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
+
 
                 <SocialLogin />
 
